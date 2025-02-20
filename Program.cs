@@ -1,7 +1,10 @@
 
 using System.Data;
+using System.Text.Json;
 using Dapper;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Data.SqlClient;
+using NetDapperWebApi;
 using NetDapperWebApi.Common.Interfaces;
 using NetDapperWebApi.Services;
 using WebApi.Context;
@@ -14,28 +17,36 @@ namespace WebApi
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // builder.Services.AddScoped<DapperDbContext>();
-            builder.Services.AddScoped<IDbConnection>(cnn => new SqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
-            builder.Services.AddScoped<IRoomTypeService, RoomTypeService>();
-            builder.Services.AddControllers();
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+            builder.Services.AddWebServices(builder.Configuration).AddAuthentications(builder.Configuration);
 
+            builder.Services.AddSwaggerExplorers(builder.Configuration);
+            //--------------------------------------------
             var app = builder.Build();
-
-            if (app.Environment.IsDevelopment())
+            app.UseExceptionHandler(config =>
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
-            }
-
+                //tối ưu hơn
+                config.Run(async context =>
+                {
+                    var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+                    var exception = exceptionHandlerPathFeature.Error;
+                    var message = exception.Message;
+                    var statusCode = 500;
+                    if (exception is SqlException)
+                    {
+                        statusCode = 400;
+                    }
+                    var response = new { message, statusCode };
+                    var result = JsonSerializer.Serialize(response);
+                    context.Response.ContentType = "application/json";
+                    context.Response.StatusCode = statusCode;
+                    await context.Response.WriteAsync(result);
+                });
+            });
+            app.UseSwagger();
+            app.UseSwaggerUI();
             app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-
+            app.UseAuthentications();
             app.MapControllers();
-
             app.Run();
         }
     }

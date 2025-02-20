@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using NetDapperWebApi.Entities;
 
-namespace NetDapperWebApi.Entities
+namespace NetDapperWebApi.DTO
 {
-    public class Payment : BaseEntity<int>
+    public class PaymentDTO : BaseEntity<int>
     {
 
         [Required]
@@ -17,7 +17,5 @@ namespace NetDapperWebApi.Entities
         public int Status { get; set; }
 
         public DateTime? PaymentDate { get; set; }
-        [JsonIgnore]
-        public virtual IList<PaymentInvoice> PaymentInvoices { get; set; } = [];
     }
 }

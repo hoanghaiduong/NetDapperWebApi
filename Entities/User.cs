@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace NetDapperWebApi.Entities
@@ -13,6 +14,7 @@ namespace NetDapperWebApi.Entities
         public string Email { get; set; } = null!;
 
         [Required, MaxLength(255)]
+        [JsonIgnore]
         public string PasswordHash { get; set; } = null!;
 
         [MaxLength(20)]
@@ -33,7 +35,11 @@ namespace NetDapperWebApi.Entities
 
 
         // Navigation Properties
-        public virtual ICollection<UserRole> UserRoles { get; set; }
-        public virtual ICollection<Booking> Bookings { get; set; }
+        [JsonIgnore]
+        public virtual Hotel? Hotel { get; set; }
+        [JsonIgnore]
+        public virtual ICollection<UserRole> UserRoles { get; set; }=[];
+        [JsonIgnore]
+        public virtual ICollection<Booking> Bookings { get; set; }=[];
     }
 }

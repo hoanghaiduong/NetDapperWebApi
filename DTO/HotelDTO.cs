@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
-using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using NetDapperWebApi.Entities;
 
-namespace NetDapperWebApi.Entities
+namespace NetDapperWebApi.DTO
 {
-    public class Hotel : BaseEntity<int>
+    public class HotelDTO : BaseEntity<int>
     {
         [Required]
         public string Name { get; set; }
@@ -25,12 +25,6 @@ namespace NetDapperWebApi.Entities
         public int? Stars { get; set; }
         public string? CheckinTime { get; set; }
         public string? CheckoutTime { get; set; }
-
-        // Navigation Properties
-        [JsonIgnore]
-        public virtual IList<Room> Rooms { get; set; } = [];
-        [JsonIgnore]
-        public virtual IList<User> Users { get; set; } = [];//employee,guest,admin
     }
 
 }

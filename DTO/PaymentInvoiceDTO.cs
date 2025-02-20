@@ -1,10 +1,10 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using System.Text.Json.Serialization;
+using NetDapperWebApi.Entities;
 
-namespace NetDapperWebApi.Entities
+namespace NetDapperWebApi.DTO
 {
-    public class PaymentInvoice
+    public class PaymentInvoiceDTO
     {
         [Required]
         public int PaymentId { get; set; }
@@ -16,9 +16,7 @@ namespace NetDapperWebApi.Entities
         public decimal Amount { get; set; }
 
         // Navigation Properties
-        [JsonIgnore]
         public virtual Payment Payment { get; set; }
-        [JsonIgnore]
         public virtual Invoice Invoice { get; set; }
     }
 }

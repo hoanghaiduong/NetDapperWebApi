@@ -2,14 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
+using NetDapperWebApi.DTO;
 
 namespace NetDapperWebApi.Entities
 {
     public class Room : BaseEntity<int>
     {
-
-
         [Required]
         public int HotelId { get; set; }
 
@@ -23,12 +23,13 @@ namespace NetDapperWebApi.Entities
         public string? Images { get; set; }
         public decimal Price { get; set; }
         public int Status { get; set; }
-    
 
-        // Navigation Properties
+         // Navigation Properties
+        [JsonIgnore]
         public virtual Hotel Hotel { get; set; }
+         [JsonIgnore]
         public virtual RoomType RoomType { get; set; }
     }
 
-  
+
 }

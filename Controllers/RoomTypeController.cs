@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using NetDapperWebApi.Common.Interfaces;
 using NetDapperWebApi.Entities;
+using NetDapperWebApi.Models;
 using NetDapperWebApi.Services;
 
 namespace NetDapperWebApi.Controllers
@@ -54,12 +56,20 @@ namespace NetDapperWebApi.Controllers
                 ? Results.NotFound(new { message = "RoomType not found" })
                 : Results.Ok(roomType);
         }
+        [HttpGet("{id}/withrooms")]
+        public async Task<IActionResult> GetByIdWithRooms(int id, [FromQuery] int depth = 0)
+        {
+            var roomType = await _roomTypeService.GetRoomTypeWithRooms(id,depth);
+            if (roomType == null)
+                return NotFound();
+            return Ok(roomType);
+        }
 
         // ✅ Lấy danh sách RoomType (Có phân trang)
         [HttpGet]
-        public async Task<IResult> GetAllRoomTypes()
+        public async Task<IResult> GetAllRoomTypes([FromQuery] PaginationModel paginationModel)
         {
-            var result = await _roomTypeService.GetRoomTypes();
+            var result = await _roomTypeService.GetRoomTypes(paginationModel);
             return Results.Ok(result);
         }
 
@@ -81,10 +91,21 @@ namespace NetDapperWebApi.Controllers
         [HttpDelete("{id:int}")]
         public async Task<IResult> DeleteRoomType(int id)
         {
-            var success = await _roomTypeService.DeleteRoomType(id);
-            return success
-                ? Results.NoContent()
-                : Results.NotFound(new { message = "RoomType not found" });
+            try
+            {
+                var success = await _roomTypeService.DeleteRoomType(id);
+                return success
+                    ? Results.NoContent()
+                    : Results.NotFound(new { message = "RoomType not found" });
+            }
+
+            catch (SqlException ex)
+            {
+                return Results.BadRequest(new
+                {
+                    message = ex.Message,
+                });
+            }
         }
     }
 }

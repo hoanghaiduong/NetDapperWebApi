@@ -2,10 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Dapper;
+using Microsoft.Data.SqlClient;
 using NetDapperWebApi.Common.Interfaces;
+using NetDapperWebApi.DTO;
 using NetDapperWebApi.Entities;
+using NetDapperWebApi.Models;
 using WebApi.Context;
 
 namespace NetDapperWebApi.Services
@@ -17,7 +21,6 @@ namespace NetDapperWebApi.Services
 
         public RoomTypeService(ILogger<RoomTypeService> logger, IDbConnection db)
         {
-
             _logger = logger;
             _db = db;
         }
@@ -35,9 +38,13 @@ namespace NetDapperWebApi.Services
             return result != null ? result : null;
         }
 
-        public Task<bool> DeleteRoomType(int id)
+        public async Task<bool> DeleteRoomType(int id)
         {
-            throw new NotImplementedException();
+            var parameters = new DynamicParameters();
+            parameters.Add("@Id", id);
+            var result = await _db.QueryFirstOrDefaultAsync<bool>(
+                "RoomTypes_Delete", parameters, commandType: CommandType.StoredProcedure);
+            return result;
         }
 
         public async Task<RoomType> GetRoomType(int id)
@@ -49,12 +56,101 @@ namespace NetDapperWebApi.Services
             return roomType;
         }
 
-        public async Task<IEnumerable<RoomType>> GetRoomTypes()
+        public async Task<PaginatedResult<RoomTypeDTOWithRooms>> GetRoomTypes(PaginationModel paginationModel)
         {
-            var roomTypes = await _db.QueryAsync<RoomType>(
-               "RoomTypes_GetAll", commandType: CommandType.StoredProcedure);
-            return roomTypes.ToList();
+
+            var multi = await _db.QueryMultipleAsync(
+               "RoomTypes_GetAll", new
+               {
+                   paginationModel.PageNumber,
+                   paginationModel.PageSize,
+                   paginationModel.Depth
+               }, commandType: CommandType.StoredProcedure);
+            // Lấy tổng số bản ghi
+            int totalCount = await multi.ReadSingleAsync<int>();
+            // Lấy danh sách RoomTypes đã phân trang
+            var roomTypes = (await multi.ReadAsync<RoomTypeDTOWithRooms>()).ToList();
+            // Nếu Depth >= 1, lấy danh sách Rooms
+            var rooms = paginationModel.Depth >= 1
+                ? (await multi.ReadAsync<RoomDTOWithHotel>()).ToList()
+                : new List<RoomDTOWithHotel>();
+
+            // Nếu Depth >= 2, lấy danh sách Hotels
+            var hotels = paginationModel.Depth >= 2
+                ? (await multi.ReadAsync<HotelDTO>()).ToList()
+                : new List<HotelDTO>();
+
+            // Nhóm Rooms theo RoomTypeId
+            var roomLookup = rooms.ToLookup(r => r.RoomTypeId);
+
+            // Nếu Depth >= 2, gán Hotel vào Room
+            if (paginationModel.Depth >= 2)
+            {
+                var hotelLookup = hotels.ToDictionary(h => h.Id);
+                foreach (var room in rooms)
+                {
+                    if (hotelLookup.TryGetValue(room.HotelId, out var hotel))
+                    {
+                        room.Hotel = hotel;
+                    }
+                }
+            }
+
+            // Gán danh sách Rooms vào RoomType tương ứng
+            foreach (var roomType in roomTypes)
+            {
+                roomType.Rooms = roomLookup[roomType.Id].ToList();
+            }
+
+            return new PaginatedResult<RoomTypeDTOWithRooms>(roomTypes, totalCount, paginationModel.PageSize, paginationModel.PageNumber);
         }
+
+        public async Task<RoomTypeDTOWithRooms> GetRoomTypeWithRooms(int id, int depth)
+        {
+            var parameters = new DynamicParameters();
+            parameters.Add("@Id", id);
+
+            // Gọi stored procedure lấy RoomType
+            var multi = await _db.QueryMultipleAsync(
+                "RoomTypes_GetByID_WithRooms",
+                parameters,
+                commandType: CommandType.StoredProcedure
+            );
+
+            // Lấy RoomType
+            var roomType = await multi.ReadFirstOrDefaultAsync<RoomTypeDTOWithRooms>();
+
+            if (roomType == null) return null;
+
+            // Nếu depth >= 1, lấy danh sách Room
+            if (depth >= 1)
+            {
+                var rooms = await multi.ReadAsync<RoomDTOWithHotel>();
+                roomType.Rooms = rooms.ToList();
+
+                // Nếu depth >= 2, lấy thêm thông tin Hotel cho từng Room
+                if (depth < 2) // Nếu depth < 2, set Hotel = null để ẩn nó
+                {
+                    foreach (var room in roomType.Rooms)
+                    {
+                        room.Hotel = null;
+                    }
+                }
+                else if (depth == 2)
+                {
+                    foreach (var room in roomType.Rooms)
+                    {
+                        var hotelParams = new DynamicParameters();
+                        hotelParams.Add("@Id", room.HotelId);
+                        // Lấy thông tin Hotel của Room
+                        room.Hotel = await _db.QueryFirstOrDefaultAsync<HotelDTO>(
+                            "Hotels_GetByID", hotelParams, commandType: CommandType.StoredProcedure);
+                    }
+                }
+            }
+            return roomType;
+        }
+
 
         public async Task<RoomType> UpdateRoomType(int id, RoomType roomType)
         {
@@ -71,7 +167,29 @@ namespace NetDapperWebApi.Services
             var updated = await GetRoomType(id);
             return updated;
         }
+
+
     }
 
+    public class RoomTypeDTOWithRoom : RoomTypeDTO //depth level 1 
+    {
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public List<RoomDTO>? Rooms { get; set; } = [];
+    }
+    public class RoomTypeDTOWithRooms : RoomTypeDTO //depth level 2 // Chứa RoomType->Room[]->Hotel
+    {
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingDefault)]
+        public List<RoomDTOWithHotel>? Rooms { get; set; } = [];
+    }
+    public class RoomDTOWithHotel : RoomDTO  //Chua Room -> Hotel
+    {
+        [JsonIgnore]
+        public int HotelId { get; set; } // Dùng để join với Hotel khi cần
+        [JsonIgnore]
+        public int RoomTypeId { get; set; } // Dùng để join với RoomType khi cần
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public HotelDTO? Hotel { get; set; } // Chỉ load nếu depth >= 2
+
+    }
 
 }

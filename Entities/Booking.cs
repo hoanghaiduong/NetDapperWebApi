@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace NetDapperWebApi.Entities
@@ -27,7 +28,9 @@ namespace NetDapperWebApi.Entities
         public decimal? TotalPrice { get; set; } = 0.0m;
 
         // Navigation Properties
+        [JsonIgnore]
         public virtual User User { get; set; }
+        [JsonIgnore]
         public virtual Room Room { get; set; }
     }
 }

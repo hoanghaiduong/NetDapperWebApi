@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace NetDapperWebApi.Entities
@@ -20,7 +21,10 @@ namespace NetDapperWebApi.Entities
         public DateTime UsedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation Properties
+        [JsonIgnore]
+        // Navigation Properties
         public virtual Booking Booking { get; set; }
+        [JsonIgnore]
         public virtual Service Service { get; set; }
     }
 }

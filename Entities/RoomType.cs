@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace NetDapperWebApi.Entities
@@ -14,6 +15,8 @@ namespace NetDapperWebApi.Entities
         public string? Description { get; set; }
         public decimal PricePerNight { get; set; }
         public int Capacity { get; set; }
-     
+        // Navigation property – danh sách các Room thuộc RoomType này
+        [JsonIgnore]
+        public List<Room>? Rooms { get; set; } = new List<Room>();
     }
 }
