@@ -8,6 +8,7 @@ using NetDapperWebApi.Entities;
 using System.Security.Claims;
 using Microsoft.Data.SqlClient;
 using System.IdentityModel.Tokens.Jwt;
+using NetDapperWebApi.DTO.Creates;
 
 namespace NetDapperWebApi.Services
 {
@@ -15,13 +16,37 @@ namespace NetDapperWebApi.Services
     {
         private readonly IJwtService _jwtService;
         private readonly IDbConnection _db;
+        private readonly IUserService _userService;
         private readonly ILogger<AuthService> _logger;
 
-        public AuthService(IDbConnection db, ILogger<AuthService> logger, IJwtService jwtService)
+        public AuthService(IDbConnection db, ILogger<AuthService> logger, IJwtService jwtService, IUserService userService)
         {
             _db = db;
             _logger = logger;
             _jwtService = jwtService;
+            _userService = userService;
+        }
+
+        public async Task<TokenModel> RefreshToken(RefreshTokenModel dto, string uid)
+        {
+
+            var user = await _userService.GetUserById(int.Parse(uid), 0);
+            // Check if the provided refresh token matches the one in the database
+            if (dto.RefreshToken != user.RefreshToken)
+            {
+                throw new Exception("RefreshToken Not Valid");
+            }
+            var principal = _jwtService.ValidateRefreshToken(dto.RefreshToken);
+            // Generate new access token
+            var newAccessToken = _jwtService.GenerateAccessToken(principal.Claims);
+
+            // Optional: Generate new refresh token (to invalidate the old one)
+            var newRefreshToken = _jwtService.GenerateRefreshToken();
+            var updated = await _userService.UpdateUser(user.Id, new UpdateUserDTO
+            {
+                RefreshToken = newRefreshToken
+            }) ?? throw new Exception();
+            return new TokenModel(newAccessToken, newRefreshToken);
         }
 
         public async Task<AuthResponse> SignInAsync(AuthDTO dto)

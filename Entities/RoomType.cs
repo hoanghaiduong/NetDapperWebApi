@@ -16,7 +16,7 @@ namespace NetDapperWebApi.Entities
         public decimal PricePerNight { get; set; }
         public int Capacity { get; set; }
         // Navigation property – danh sách các Room thuộc RoomType này
-        [JsonIgnore]
-        public List<Room>? Rooms { get; set; } = new List<Room>();
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<Room>? Rooms { get; set; } = null;
     }
 }

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using NetDapperWebApi.Common.Interfaces;
 using NetDapperWebApi.DTO;
+using NetDapperWebApi.DTO.Creates;
 using NetDapperWebApi.Entities;
 using NetDapperWebApi.Models;
 
@@ -21,16 +22,16 @@ namespace NetDapperWebApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] User user)
+        public async Task<IActionResult> Create([FromForm] CreateUserDTO user)
         {
             var result = await _userService.CreateUser(user);
             return Ok(new { message = result });
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById([FromRoute]int id,[FromQuery] int depth=0)
+        public async Task<IActionResult> GetById([FromRoute] int id, [FromQuery] int depth = 0)
         {
-            var user = await _userService.GetUserById(id,depth);
+            var user = await _userService.GetUserById(id, depth);
             if (user == null) return NotFound();
             return Ok(user);
         }
@@ -43,11 +44,11 @@ namespace NetDapperWebApi.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update([FromBody] User user)
+        public async Task<IActionResult> Update([FromRoute] int id, [FromForm] UpdateUserDTO user)
         {
-          
-            var result = await _userService.UpdateUser(user);
-            return Ok(new { message = result });
+
+            var result = await _userService.UpdateUser(id, user);
+            return Ok(new { result });
         }
 
         [HttpDelete("{id}")]

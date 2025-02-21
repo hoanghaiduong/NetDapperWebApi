@@ -16,8 +16,12 @@ namespace NetDapperWebApi.Entities
 
         public string? Description { get; set; }
 
-
+        // Navigation Properties
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public virtual List<User>? Users { get; set; } = null;
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public virtual List<UserRole>? UserRoles { get; set; } = null;
         [JsonIgnore]
-        public virtual ICollection<UserRole> UserRoles { get; set; }
+        public int? UserId { get; set; }
     }
 }

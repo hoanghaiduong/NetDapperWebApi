@@ -5,6 +5,7 @@ using System.Text.Json.Serialization;
 using Dapper;
 using NetDapperWebApi.Common.Interfaces;
 using NetDapperWebApi.DTO;
+using NetDapperWebApi.DTO.Creates;
 using NetDapperWebApi.Entities;
 using NetDapperWebApi.Models;
 
@@ -14,18 +15,20 @@ namespace NetDapperWebApi.Services
     {
         private readonly ILogger<UserService> _logger;
         private readonly IDbConnection _db;
+        private readonly IHotelService _hotelService;
 
-        public UserService(ILogger<UserService> logger, IDbConnection db)
+        public UserService(ILogger<UserService> logger, IDbConnection db, IHotelService hotelService)
         {
             _logger = logger;
             _db = db;
+            _hotelService = hotelService;
         }
 
-        public async Task<User> CreateUser(User user)
+        public async Task<User> CreateUser(CreateUserDTO user)
         {
             var parameters = new DynamicParameters();
             parameters.Add("@Email", user.Email);
-            parameters.Add("@PasswordHash", user.PasswordHash);
+            parameters.Add("@Password", user.Password);
             parameters.Add("@PhoneNumber", user.PhoneNumber);
             parameters.Add("@FirstName", user.FirstName);
             parameters.Add("@LastName", user.LastName);
@@ -50,47 +53,89 @@ namespace NetDapperWebApi.Services
             return result;
         }
 
-        public async Task<PaginatedResult<UserRelations>> GetAllUsers(PaginationModel paginationModel)
+        // Chỉ lấy danh sách relation cấp 1
+        public async Task<PaginatedResult<User>> GetAllUsers(PaginationModel paginationModel)
         {
-            return null;
+            var parameters = new DynamicParameters();
+            parameters.Add("@PageNumber", paginationModel.PageNumber);
+            parameters.Add("@PageSize", paginationModel.PageSize);
+            parameters.Add("@Depth", paginationModel.Depth);
+            parameters.Add("@Search", paginationModel.Search);
+
+            int totalCount;
+            List<User>? userRelations;
+
+            using var multi = await _db.QueryMultipleAsync(
+                "Users_GetAll", parameters, commandType: CommandType.StoredProcedure);
+
+            // Đọc tổng số lượng user
+            totalCount = await multi.ReadSingleAsync<int>();
+
+            // Đọc danh sách user
+            userRelations = (await multi.ReadAsync<User>()).ToList();//user with relations
+
+            if (paginationModel.Depth >= 1)
+            {
+                // Đọc danh sách hotels
+                var hotels = (await multi.ReadAsync<Hotel>()).ToList();
+
+
+                var roles = (await multi.ReadAsync<Role>()).ToList();
+
+                // Đọc danh sách bookings
+                var bookings = (await multi.ReadAsync<Booking>()).ToList();
+                foreach (var user in userRelations)
+                {
+                    user.Hotel = hotels.Where(h => h.Id == user.HotelId).FirstOrDefault();
+
+                    user.Roles = [.. roles.Where(s => s.UserId == user.Id)];
+
+                    user.Bookings = [.. bookings.Where(b => b.UserId == user.Id)];
+                }
+            }
+
+
+            return new PaginatedResult<User>(userRelations, totalCount, paginationModel.PageNumber, paginationModel.PageSize);
         }
 
-        public async Task<UserRelations> GetUserById(int id, int depth)
+
+        public async Task<User> GetUserById(int id, int depth)
         {
             var parameters = new DynamicParameters();
             parameters.Add("@Id", id);
             parameters.Add("@Depth", depth);
 
-            var multi = await _db.QueryMultipleAsync(
-                "Users_GetByID", parameters, commandType: CommandType.StoredProcedure);
-            var user = await multi.ReadSingleOrDefaultAsync<UserRelations>();
-            if (user == null) return null;
+            User? user;
 
-            if (depth >= 1)
+            using (var multi = await _db.QueryMultipleAsync(
+                "Users_GetByID", parameters, commandType: CommandType.StoredProcedure))
             {
-                user.Hotel = await multi.ReadSingleOrDefaultAsync<HotelDTO>();
-                user.Roles = (await multi.ReadAsync<RoleDTO>()).ToList();
-                user.Bookings = (await multi.ReadAsync<BookingDTO>()).ToList();
+                user = await multi.ReadSingleOrDefaultAsync<User>();
+
+
+                if (depth == 1 && user != null)
+                {
+
+                    user.Roles = [.. (await multi.ReadAsync<Role>()).ToList().Where(s=>s.UserId==user.Id)];
+                    user.Bookings = (await multi.ReadAsync<Booking>()).ToList();
+                }
+            } // `multi` sẽ tự động đóng ở đây
+            if (depth == 1 && user?.HotelId != null)
+            {
+                user.Hotel = await _hotelService.GetHotel(user.HotelId ?? 0, 0);
             }
-
-            if (depth >= 2)
+            // Sau khi đóng `multi`, gọi GetHotel bên ngoài using block
+            if (depth >= 2 && user?.HotelId != null)
             {
-                
-            }
-
-            if (depth >= 3)
-            {
-
+                user.Hotel = await _hotelService.GetHotel(user.HotelId ?? 0, depth);
             }
             return user;
         }
 
-        public async Task<User> UpdateUser(User user)
+        public async Task<User> UpdateUser(int id, UpdateUserDTO user)
         {
             var parameters = new DynamicParameters();
-            parameters.Add("@Id", user.Id);
-            parameters.Add("@Email", user.Email);
-            parameters.Add("@PasswordHash", user.PasswordHash);
+            parameters.Add("@Id", id);
             parameters.Add("@PhoneNumber", user.PhoneNumber);
             parameters.Add("@FirstName", user.FirstName);
             parameters.Add("@LastName", user.LastName);
@@ -106,22 +151,6 @@ namespace NetDapperWebApi.Services
             return result;
         }
     }
-    public class UserHotel : UserDTO //depth ==1
-    {
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public HotelDTO Hotel { get; set; }
-    }
-    //depth ==2 lay room va roomtype
 
-    public class UserRelations : UserHotel //result
-    {
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public int? BookingId { get; set; }
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<BookingDTO>? Bookings { get; set; }
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public int? UserId { get; set; }
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public List<RoleDTO>? Roles { get; set; }
-    }
+
 }

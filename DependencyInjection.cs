@@ -35,6 +35,7 @@ namespace NetDapperWebApi
             services.AddSwaggerGen((configure) =>
               {
                   configure.SchemaFilter<EnumSchemaFilter>();
+               
                   configure.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
                   {
                       Name = "JWT Authentication",

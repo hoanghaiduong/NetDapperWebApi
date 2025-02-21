@@ -1,6 +1,11 @@
 
 
+using System.ComponentModel.DataAnnotations;
+
 namespace NetDapperWebApi.Models
 {
-    public record RefreshTokenModel(string RefreshToken);
+    public record RefreshTokenModel(
+        [Required]
+        string RefreshToken
+    );
 }

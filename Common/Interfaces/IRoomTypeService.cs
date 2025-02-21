@@ -11,12 +11,12 @@ namespace NetDapperWebApi.Common.Interfaces
 {
     public interface IRoomTypeService
     {
-        Task<RoomType> CreateRoomType(RoomType roomType);
+        Task<RoomType> CreateRoomType(RoomTypeDTO roomType);
         Task<RoomType> GetRoomType(int id);
-        Task<PaginatedResult<RoomTypeDTOWithRooms>> GetRoomTypes(PaginationModel pagination);
-        Task<RoomType> UpdateRoomType(int id, RoomType roomType);
+        Task<PaginatedResult<RoomType>> GetRoomTypes(PaginationModel pagination);
+        Task<RoomType> UpdateRoomType(RoomTypeDTO roomType);
         Task<bool> DeleteRoomType(int id);
         // Task<RoomTypeDTOWithRoom> GetRoomTypeWithRooms(int id);
-        Task<RoomTypeDTOWithRooms> GetRoomTypeWithRooms(int id, int depth);
+        Task<RoomType> GetRoomTypeWithRooms(int id, int depth);
     }
 }

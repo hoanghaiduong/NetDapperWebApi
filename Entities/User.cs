@@ -26,20 +26,26 @@ namespace NetDapperWebApi.Entities
         [MaxLength(50)]
         public string? LastName { get; set; } = string.Empty;
 
-        public bool? EmailVerified { get; set; }=false;
-        public string? Avatar { get; set; }=string.Empty;
+        public bool? EmailVerified { get; set; } = false;
+        public string? Avatar { get; set; } = string.Empty;
         public string? RefreshToken { get; set; } = string.Empty;
         public bool IsDisabled { get; set; } = false;
         public DateTime? LastLogin { get; set; }
-        public int? HotelId { get; set; }
+        [JsonIgnore]
+        public int? HotelId { get; set; } = null;
 
 
         // Navigation Properties
-        [JsonIgnore]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public virtual Hotel? Hotel { get; set; }
-        [JsonIgnore]
-        public virtual ICollection<UserRole> UserRoles { get; set; }=[];
-        [JsonIgnore]
-        public virtual ICollection<Booking> Bookings { get; set; }=[];
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public virtual List<Role>? Roles { get; set; } = null;
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public virtual List<UserRole>? UserRoles { get; set; } = null;
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public virtual List<Booking>? Bookings { get; set; } = null;
     }
 }

@@ -27,10 +27,10 @@ namespace NetDapperWebApi.Entities
         public string? CheckoutTime { get; set; }
 
         // Navigation Properties
-        [JsonIgnore]
-        public virtual IList<Room> Rooms { get; set; } = [];
-        [JsonIgnore]
-        public virtual IList<User> Users { get; set; } = [];//employee,guest,admin
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public virtual IList<Room>? Rooms { get; set; } = null;
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public virtual IList<User>? Users { get; set; } = null;//employee,guest,admin
     }
 
 }

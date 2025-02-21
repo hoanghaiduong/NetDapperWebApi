@@ -1,7 +1,9 @@
 
 using Microsoft.AspNetCore.Mvc;
 using NetDapperWebApi.Common.Interfaces;
+using NetDapperWebApi.DTO;
 using NetDapperWebApi.Entities;
+using NetDapperWebApi.Models;
 
 
 namespace NetDapperWebApi.Controllers
@@ -17,7 +19,7 @@ namespace NetDapperWebApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IResult> Create([FromBody] Room dto)
+        public async Task<IResult> Create([FromForm] RoomDTO dto)
         {
             var result = await _roomService.CreateRoom(dto);
             return Results.Ok(new { message = result });
@@ -32,9 +34,9 @@ namespace NetDapperWebApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IResult> GetAll()
+        public async Task<IResult> GetAll([FromQuery] PaginationModel paginationModel)
         {
-            var rooms = await _roomService.GetRooms();
+            var rooms = await _roomService.GetRooms(paginationModel);
             return Results.Ok(rooms);
         }
 

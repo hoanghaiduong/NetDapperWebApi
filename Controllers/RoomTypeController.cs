@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using NetDapperWebApi.Common.Interfaces;
+using NetDapperWebApi.DTO;
 using NetDapperWebApi.Entities;
 using NetDapperWebApi.Models;
 using NetDapperWebApi.Services;
@@ -26,7 +27,7 @@ namespace NetDapperWebApi.Controllers
 
         // ✅ Tạo RoomType (201 Created)
         [HttpPost]
-        public async Task<IResult> CreateRoomType([FromBody] RoomType roomType)
+        public async Task<IResult> CreateRoomType([FromBody] RoomTypeDTO roomType)
         {
             try
             {
@@ -59,7 +60,7 @@ namespace NetDapperWebApi.Controllers
         [HttpGet("{id}/withrooms")]
         public async Task<IActionResult> GetByIdWithRooms(int id, [FromQuery] int depth = 0)
         {
-            var roomType = await _roomTypeService.GetRoomTypeWithRooms(id,depth);
+            var roomType = await _roomTypeService.GetRoomTypeWithRooms(id, depth);
             if (roomType == null)
                 return NotFound();
             return Ok(roomType);
@@ -75,10 +76,10 @@ namespace NetDapperWebApi.Controllers
 
         // ✅ Cập nhật RoomType (204 No Content)
         [HttpPut("{id:int}")]
-        public async Task<IResult> UpdateRoomType(int id, [FromBody] RoomType roomType)
+        public async Task<IResult> UpdateRoomType(int id, [FromBody] RoomTypeDTO roomType)
         {
             roomType.Id = id;
-            var success = await _roomTypeService.UpdateRoomType(id, roomType);
+            var success = await _roomTypeService.UpdateRoomType(roomType);
             return success != null
                 ? Results.Ok(new
                 {

@@ -24,11 +24,11 @@ namespace NetDapperWebApi.Entities
         public decimal Price { get; set; }
         public int Status { get; set; }
 
-         // Navigation Properties
-        [JsonIgnore]
-        public virtual Hotel Hotel { get; set; }
-         [JsonIgnore]
-        public virtual RoomType RoomType { get; set; }
+        // Navigation Properties
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public virtual Hotel? Hotel { get; set; } = null;
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public virtual RoomType? RoomType { get; set; } = null;
     }
 
 

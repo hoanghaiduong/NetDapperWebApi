@@ -48,7 +48,7 @@ namespace NetDapperWebApi.Services
             return result;
         }
 
-        public async Task<PaginatedResult<HotelWithRooms>> GetAllHotels(PaginationModel paginationModel)
+        public async Task<PaginatedResult<Hotel>> GetAllHotels(PaginationModel paginationModel)
         {
 
             try
@@ -65,12 +65,12 @@ namespace NetDapperWebApi.Services
                 int totalCount = await multi.ReadSingleAsync<int>();
 
                 // Lấy danh sách khách sạn (HotelWithRooms)
-                var hotels = (await multi.ReadAsync<HotelWithRooms>()).ToList();
+                var hotels = (await multi.ReadAsync<Hotel>()).ToList();
 
                 // Nếu Depth >= 1, ta đọc thêm danh sách phòng
                 if (paginationModel.Depth >= 1)
                 {
-                    var rooms = (await multi.ReadAsync<RoomAndRoomType>()).ToList();
+                    var rooms = (await multi.ReadAsync<Room>()).ToList();
                     foreach (var hotel in hotels)
                     {
                         hotel.Rooms = rooms.Where(r => r.HotelId == hotel.Id).ToList();
@@ -79,7 +79,7 @@ namespace NetDapperWebApi.Services
                     // Nếu Depth == 2, ta đọc thêm danh sách RoomType và gán cho từng phòng
                     if (paginationModel.Depth == 2)
                     {
-                        var roomTypes = (await multi.ReadAsync<RoomTypeDTO>()).ToList();
+                        var roomTypes = (await multi.ReadAsync<RoomType>()).ToList();
                         foreach (var hotel in hotels)
                         {
                             foreach (var room in hotel.Rooms)
@@ -90,7 +90,7 @@ namespace NetDapperWebApi.Services
                     }
 
                 }
-                return new PaginatedResult<HotelWithRooms>(hotels, totalCount, paginationModel.PageNumber, paginationModel.PageSize);
+                return new PaginatedResult<Hotel>(hotels, totalCount, paginationModel.PageNumber, paginationModel.PageSize);
             }
             catch (System.Exception ex)
             {
@@ -100,7 +100,7 @@ namespace NetDapperWebApi.Services
 
         }
 
-        public async Task<HotelWithRooms> GetHotel(int id, int depth)
+        public async Task<Hotel> GetHotel(int id, int depth)
         {
 
             var parameters = new { Id = id, Depth = depth };
@@ -108,20 +108,20 @@ namespace NetDapperWebApi.Services
             using var multi = await _db.QueryMultipleAsync("Hotels_GetByID", parameters, commandType: CommandType.StoredProcedure);
 
             // Lấy thông tin khách sạn
-            var hotel = await multi.ReadSingleOrDefaultAsync<HotelWithRooms>();
+            var hotel = await multi.ReadSingleOrDefaultAsync<Hotel>();
             if (hotel == null) return null; // Nếu không tìm thấy thì trả về null
 
             // Lấy danh sách phòng nếu depth >= 1
             if (depth >= 1)
             {
-                var rooms = await multi.ReadAsync<RoomAndRoomType>();
+                var rooms = await multi.ReadAsync<Room>();
                 hotel.Rooms = [.. rooms];
             }
 
             // Lấy danh sách RoomTypes nếu depth >= 2
             if (depth >= 2)
             {
-                var roomTypes = await multi.ReadAsync<RoomTypeDTO>();
+                var roomTypes = await multi.ReadAsync<RoomType>();
                 var roomTypeDict = roomTypes.ToDictionary(rt => rt.Id);
 
                 foreach (var room in hotel.Rooms)
@@ -155,21 +155,6 @@ namespace NetDapperWebApi.Services
                 "Hotels_Update", parameters, commandType: CommandType.StoredProcedure);
             return result;
         }
-    }
-    //dto chứa các mối quan hệ của hotel 
-
-    public class HotelWithRooms : HotelDTO
-    {
-        public List<RoomAndRoomType>? Rooms { get; set; } = [];
-    }
-    public class RoomAndRoomType : RoomDTO
-    {
-        [JsonIgnore]
-        public int HotelId { get; set; } 
-        [JsonIgnore]
-        public int RoomTypeId { get; set; }
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public RoomTypeDTO RoomType { get; set; } = null!;
     }
 
 }

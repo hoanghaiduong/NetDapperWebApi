@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NetDapperWebApi.Common.Interfaces;
 using NetDapperWebApi.DTO;
+using NetDapperWebApi.Models;
 
 namespace NetDapperWebApi.Controllers
 {
@@ -42,10 +43,12 @@ namespace NetDapperWebApi.Controllers
         //     }
         //     catch (System.Exception)
         //     {
-                
+
         //         throw;
         //     }
         // }
+
+
         [HttpPost("signin")]
         public async Task<IResult> SignIn([FromBody] AuthDTO dto)
         {
@@ -68,6 +71,28 @@ namespace NetDapperWebApi.Controllers
             try
             {
                 var result = await _authService.SignUpAsync(dto);
+                return Results.Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return Results.BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
+        }
+
+        [HttpPost("refresh-token"), Authorize]
+        public async Task<IResult> RefreshToken([FromBody] RefreshTokenModel dto)
+        {
+            try
+            {
+                var uid = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                if (string.IsNullOrEmpty(uid))
+                {
+                    return Results.Unauthorized();
+                }
+                var result = await _authService.RefreshToken(dto, uid);
                 return Results.Ok(result);
             }
             catch (Exception ex)

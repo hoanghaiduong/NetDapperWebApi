@@ -14,6 +14,7 @@ namespace NetDapperWebApi.Models
             PageSize = pageSize;
             CurrentPage = currentPage;
         }
+   
         public List<T> Items { get; set; } = [];
         public int TotalCount { get; set; }  // Tổng số lượng bản ghi
 

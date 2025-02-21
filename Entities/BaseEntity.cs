@@ -11,7 +11,7 @@ namespace NetDapperWebApi.Entities
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public TKey Id { get; set; }
+        public TKey? Id { get; set; }
 
         public DateTime? CreatedAt { get; set; } = DateTime.Now;
 

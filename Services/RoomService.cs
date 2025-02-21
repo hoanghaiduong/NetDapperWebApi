@@ -2,7 +2,9 @@
 using System.Data;
 using Dapper;
 using NetDapperWebApi.Common.Interfaces;
+using NetDapperWebApi.DTO;
 using NetDapperWebApi.Entities;
+using NetDapperWebApi.Models;
 
 namespace NetDapperWebApi.Services
 {
@@ -17,7 +19,7 @@ namespace NetDapperWebApi.Services
             _logger = logger;
         }
 
-        public async Task<Room> CreateRoom(Room room)
+        public async Task<Room> CreateRoom(RoomDTO room)
         {
             var parameters = new DynamicParameters();
             parameters.Add("@HotelID", room.HotelId);
@@ -27,7 +29,7 @@ namespace NetDapperWebApi.Services
             parameters.Add("@Images", room.Images);
             parameters.Add("@Price", room.Price);
             parameters.Add("@Status", room.Status);
-            
+
 
             var result = await _db.QueryFirstOrDefaultAsync<Room>(
                 "Rooms_Create", parameters, commandType: CommandType.StoredProcedure);
@@ -52,11 +54,40 @@ namespace NetDapperWebApi.Services
             return room;
         }
 
-        public async Task<IEnumerable<Room>> GetRooms()
+        public async Task<PaginatedResult<Room>> GetRooms(PaginationModel paginationModel)
         {
-            var rooms = await _db.QueryAsync<Room>("Rooms_GetAll", commandType: CommandType.StoredProcedure);
-            return rooms;
+            var parameters = new
+            {
+                PageNumber = paginationModel.PageNumber,
+                PageSize = paginationModel.PageSize,
+                Depth = paginationModel.Depth,
+                Search = paginationModel.Search
+            };
+
+            using (var multi = await _db.QueryMultipleAsync("Rooms_GetAll", parameters, commandType: CommandType.StoredProcedure))
+            {
+                var totalCount = await multi.ReadFirstOrDefaultAsync<int>(); // Đọc TotalCount
+                var rooms = (await multi.ReadAsync<Room>()).ToList(); // Đọc danh sách Rooms
+
+                List<Hotel> hotels = new();
+                List<RoomType> roomTypes = new();
+
+                if (paginationModel.Depth >= 1)
+                {
+                    hotels = (await multi.ReadAsync<Hotel>()).ToList();
+                    roomTypes = (await multi.ReadAsync<RoomType>()).ToList();
+
+                    foreach (var room in rooms)
+                    {
+                        room.Hotel = hotels.FirstOrDefault(s => s.Id == room.HotelId);
+                        room.RoomType = roomTypes.FirstOrDefault(s => s.Id == room.RoomTypeId);
+                    }
+                }
+
+                return new PaginatedResult<Room>(rooms, totalCount, paginationModel.PageNumber, paginationModel.PageSize);
+            }
         }
+
 
         public async Task<Room> UpdateRoom(int id, Room room)
         {
