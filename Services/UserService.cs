@@ -16,32 +16,47 @@ namespace NetDapperWebApi.Services
         private readonly ILogger<UserService> _logger;
         private readonly IDbConnection _db;
         private readonly IHotelService _hotelService;
-
-        public UserService(ILogger<UserService> logger, IDbConnection db, IHotelService hotelService)
+        private readonly IFileUploadService _fileService;
+        public UserService(ILogger<UserService> logger, IDbConnection db, IHotelService hotelService, IFileUploadService fileService)
         {
             _logger = logger;
             _db = db;
             _hotelService = hotelService;
+            _fileService = fileService;
         }
 
         public async Task<User> CreateUser(CreateUserDTO user)
         {
-            var parameters = new DynamicParameters();
-            parameters.Add("@Email", user.Email);
-            parameters.Add("@Password", user.Password);
-            parameters.Add("@PhoneNumber", user.PhoneNumber);
-            parameters.Add("@FirstName", user.FirstName);
-            parameters.Add("@LastName", user.LastName);
-            parameters.Add("@EmailVerified", user.EmailVerified);
-            parameters.Add("@Avatar", user.Avatar);
-            parameters.Add("@RefreshToken", user.RefreshToken);
-            parameters.Add("@IsDisabled", user.IsDisabled);
-            parameters.Add("@LastLogin", user.LastLogin);
-            parameters.Add("@HotelId", user.HotelId);
-            // Gọi stored procedure Users_Create
-            var result = await _db.QueryFirstOrDefaultAsync<User>(
-                "Users_Create", parameters, commandType: CommandType.StoredProcedure);
-            return result;
+            var newAvatar = string.Empty;
+            try
+            {
+                if (user.Avatar != null)
+                {
+                    newAvatar = await _fileService.UploadSingleFile(new[] { "uploads", "images", "users", "avatars" }, user.Avatar);
+                }
+                var parameters = new DynamicParameters();
+                parameters.Add("@Email", user.Email);
+                parameters.Add("@Password", user.Password);
+                parameters.Add("@PhoneNumber", user.PhoneNumber);
+                parameters.Add("@FirstName", user.FirstName);
+                parameters.Add("@LastName", user.LastName);
+                parameters.Add("@EmailVerified", user.EmailVerified);
+                parameters.Add("@Avatar", newAvatar);
+                parameters.Add("@RefreshToken", user.RefreshToken);
+                parameters.Add("@IsDisabled", user.IsDisabled);
+                parameters.Add("@LastLogin", user.LastLogin);
+                parameters.Add("@HotelId", user.HotelId);
+                // Gọi stored procedure Users_Create
+                var result = await _db.QueryFirstOrDefaultAsync<User>(
+                    "Users_Create", parameters, commandType: CommandType.StoredProcedure);
+                return result;
+            }
+            catch (System.Exception)
+            {
+                _fileService.DeleteSingleFile(newAvatar);
+                throw;
+            }
+
         }
 
         public async Task<bool> DeleteUser(int id)
@@ -116,7 +131,7 @@ namespace NetDapperWebApi.Services
                 if (depth == 1 && user != null)
                 {
 
-                    user.Roles = [.. (await multi.ReadAsync<Role>()).ToList().Where(s=>s.UserId==user.Id)];
+                    user.Roles = [.. (await multi.ReadAsync<Role>()).ToList().Where(s => s.UserId == user.Id)];
                     user.Bookings = (await multi.ReadAsync<Booking>()).ToList();
                 }
             } // `multi` sẽ tự động đóng ở đây

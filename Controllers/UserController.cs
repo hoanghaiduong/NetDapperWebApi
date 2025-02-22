@@ -22,40 +22,81 @@ namespace NetDapperWebApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create([FromForm] CreateUserDTO user)
+        public async Task<IResult> Create([FromForm] CreateUserDTO user)
         {
-            var result = await _userService.CreateUser(user);
-            return Ok(new { message = result });
+            try
+            {
+                var result = await _userService.CreateUser(user);
+                return Results.Ok(new { result });
+            }
+            catch (Exception ex)
+            {
+                return Results.BadRequest(ex.Message);
+            }
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetById([FromRoute] int id, [FromQuery] int depth = 0)
+        public async Task<IResult> GetById([FromRoute] int id, [FromQuery] int depth = 0)
         {
-            var user = await _userService.GetUserById(id, depth);
-            if (user == null) return NotFound();
-            return Ok(user);
+            try
+            {
+                var user = await _userService.GetUserById(id, depth);
+                if (user == null) return Results.NotFound();
+                return Results.Ok(user);
+            }
+
+            catch (Exception ex)
+            {
+                return Results.BadRequest(ex.Message);
+            }
+
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] PaginationModel model)
+        public async Task<IResult> GetAll([FromQuery] PaginationModel model)
         {
-            var users = await _userService.GetAllUsers(model);
-            return Ok(users);
+            try
+            {
+                var users = await _userService.GetAllUsers(model);
+                return Results.Ok(users);
+            }
+            catch (Exception ex)
+            {
+                return Results.BadRequest(ex.Message);
+            }
+
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update([FromRoute] int id, [FromForm] UpdateUserDTO user)
+        public async Task<IResult> Update([FromRoute] int id, [FromForm] UpdateUserDTO user)
         {
+            try
+            {
+                var result = await _userService.UpdateUser(id, user);
+                return Results.Ok(new { result });
+            }
 
-            var result = await _userService.UpdateUser(id, user);
-            return Ok(new { result });
+            catch (Exception ex)
+            {
+                return Results.BadRequest(ex.Message);
+            }
+
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
+        public async Task<IResult> Delete(int id)
         {
-            var result = await _userService.DeleteUser(id);
-            return Ok(new { message = result });
+            try
+            {
+                var result = await _userService.DeleteUser(id);
+                return Results.Ok(new {  result });
+            }
+
+            catch (Exception ex)
+            {
+                return Results.BadRequest(ex.Message);
+            }
+
         }
     }
 }

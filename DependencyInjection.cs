@@ -1,7 +1,9 @@
 
 using System.Data;
 using System.Text;
+using System.Text.Json;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Data.SqlClient;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -23,7 +25,8 @@ namespace NetDapperWebApi
             services.AddScoped<IHotelService, HotelService>();
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IJwtService, JwtService>();
-            services.AddScoped<IUserService,UserService>();
+            services.AddScoped<IUserService, UserService>();
+            services.AddScoped<IFileUploadService, FileUploadService>();
             services.AddControllers();
 
             return services;
@@ -35,7 +38,7 @@ namespace NetDapperWebApi
             services.AddSwaggerGen((configure) =>
               {
                   configure.SchemaFilter<EnumSchemaFilter>();
-               
+
                   configure.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
                   {
                       Name = "JWT Authentication",
@@ -96,6 +99,31 @@ namespace NetDapperWebApi
             });
             services.AddAuthorization();
             return services;
+        }
+        public static WebApplication UseCustomExtensions(this WebApplication app)
+        {
+               app.UseExceptionHandler(config =>
+            {
+                //tối ưu hơn
+                config.Run(async context =>
+                {
+                    var exceptionHandlerPathFeature = context.Features.Get<IExceptionHandlerPathFeature>();
+                    var exception = exceptionHandlerPathFeature.Error;
+                    var message = exception.Message;
+                    var statusCode = 500;
+                    if (exception is SqlException)
+                    {
+                        statusCode = 400;
+                    }
+                    var response = new { message, statusCode };
+                    var result = JsonSerializer.Serialize(response);
+                    context.Response.ContentType = "application/json";
+                    context.Response.StatusCode = statusCode;
+                    await context.Response.WriteAsync(result);
+                });
+            });
+            app.UseStaticFiles();
+            return app;
         }
         public static WebApplication UseAuthentications(this WebApplication app)
         {
