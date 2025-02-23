@@ -3,6 +3,7 @@
 using System.Data;
 using System.Text.Json.Serialization;
 using Dapper;
+using Microsoft.Data.SqlClient;
 using NetDapperWebApi.Common.Interfaces;
 using NetDapperWebApi.DTO;
 using NetDapperWebApi.DTO.Creates;
@@ -53,7 +54,11 @@ namespace NetDapperWebApi.Services
             }
             catch (System.Exception)
             {
-                _fileService.DeleteSingleFile(newAvatar);
+                if (!string.IsNullOrEmpty(newAvatar))
+                {
+                    _fileService.DeleteSingleFile(newAvatar);
+                }
+
                 throw;
             }
 
@@ -149,23 +154,60 @@ namespace NetDapperWebApi.Services
 
         public async Task<User> UpdateUser(int id, UpdateUserDTO user)
         {
-            var parameters = new DynamicParameters();
-            parameters.Add("@Id", id);
-            parameters.Add("@PhoneNumber", user.PhoneNumber);
-            parameters.Add("@FirstName", user.FirstName);
-            parameters.Add("@LastName", user.LastName);
-            parameters.Add("@EmailVerified", user.EmailVerified);
-            parameters.Add("@Avatar", user.Avatar);
-            parameters.Add("@RefreshToken", user.RefreshToken);
-            parameters.Add("@IsDisabled", user.IsDisabled);
-            parameters.Add("@LastLogin", user.LastLogin);
-            parameters.Add("@HotelId", user.HotelId);
+            string? newAvatar = null;
+            try
+            {
+                var currentUser = await GetUserById(id, 0);
 
-            var result = await _db.QueryFirstOrDefaultAsync<User>(
-                "Users_Update", parameters, commandType: CommandType.StoredProcedure);
-            return result;
+                if (user.Avatar != null)
+                {
+                    // Chỉ xóa ảnh cũ nếu có ảnh mới hợp lệ
+                    newAvatar = await _fileService.UploadSingleFile(["uploads", "images", "users", "avatars"], user.Avatar);
+                    if (!string.IsNullOrEmpty(newAvatar) && !string.IsNullOrEmpty(currentUser.Avatar))
+                    {
+                        _fileService.DeleteSingleFile(currentUser.Avatar);
+                        currentUser.Avatar = newAvatar;
+                    }
+                }
+
+                var parameters = new DynamicParameters(new
+                {
+                    Id = id,
+                    user.PhoneNumber,
+                    user.FirstName,
+                    user.LastName,
+                    user.EmailVerified,
+                    Avatar = newAvatar ?? currentUser.Avatar,
+                    user.RefreshToken,
+                    user.IsDisabled,
+                    user.LastLogin,
+                    user.HotelId
+                });
+
+                var multi = await _db.QueryMultipleAsync("Users_Update", parameters, commandType: CommandType.StoredProcedure);
+                return await multi.ReadSingleAsync<User>();
+            }
+            catch (SqlException ex)
+            {
+                // Log lỗi database cụ thể
+                throw new Exception("Lỗi khi cập nhật user vào database.", ex);
+            }
+            catch (IOException ex)
+            {
+                // Log lỗi file hệ thống
+                throw new Exception("Lỗi khi xử lý ảnh đại diện.", ex);
+            }
+            catch (Exception ex)
+            {
+                if (!string.IsNullOrEmpty(newAvatar))
+                {
+                    _fileService.DeleteSingleFile(newAvatar);
+                }
+                throw new Exception("Lỗi không xác định khi cập nhật user.", ex);
+            }
         }
+
+
+
     }
-
-
 }

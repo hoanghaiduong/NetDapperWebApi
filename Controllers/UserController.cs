@@ -31,7 +31,10 @@ namespace NetDapperWebApi.Controllers
             }
             catch (Exception ex)
             {
-                return Results.BadRequest(ex.Message);
+                return Results.BadRequest(new
+                {
+                    ex.Message
+                });
             }
         }
 
@@ -47,9 +50,11 @@ namespace NetDapperWebApi.Controllers
 
             catch (Exception ex)
             {
-                return Results.BadRequest(ex.Message);
+                return Results.BadRequest(new
+                {
+                    ex.Message
+                });
             }
-
         }
 
         [HttpGet]
@@ -62,7 +67,10 @@ namespace NetDapperWebApi.Controllers
             }
             catch (Exception ex)
             {
-                return Results.BadRequest(ex.Message);
+                return Results.BadRequest(new
+                {
+                    ex.Message
+                });
             }
 
         }
@@ -78,9 +86,11 @@ namespace NetDapperWebApi.Controllers
 
             catch (Exception ex)
             {
-                return Results.BadRequest(ex.Message);
+                return Results.BadRequest(new
+                {
+                    ex.Message
+                });
             }
-
         }
 
         [HttpDelete("{id}")]
@@ -89,12 +99,15 @@ namespace NetDapperWebApi.Controllers
             try
             {
                 var result = await _userService.DeleteUser(id);
-                return Results.Ok(new {  result });
+                return Results.Ok(new { result });
             }
 
             catch (Exception ex)
             {
-                return Results.BadRequest(ex.Message);
+                return Results.BadRequest(new
+                {
+                    ex.Message
+                });
             }
 
         }

@@ -10,17 +10,17 @@ namespace NetDapperWebApi.Entities
 {
     public class Room : BaseEntity<int>
     {
-        [Required]
+        [JsonIgnore]
+
         public int HotelId { get; set; }
 
-        [Required]
+        [JsonIgnore]
         public int RoomTypeId { get; set; }
 
         [Required, MaxLength(20)]
         public string RoomNumber { get; set; }
 
-        public string? Thumbnail { get; set; }
-        public string? Images { get; set; }
+
         public decimal Price { get; set; }
         public int Status { get; set; }
 
@@ -29,6 +29,9 @@ namespace NetDapperWebApi.Entities
         public virtual Hotel? Hotel { get; set; } = null;
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public virtual RoomType? RoomType { get; set; } = null;
+        // Ảnh sẽ được lấy từ bảng Images qua EntityType = "Room"
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<Image>? Images { get; set; } // Không map trực tiếp vào DB
     }
 
 

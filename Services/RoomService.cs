@@ -3,6 +3,7 @@ using System.Data;
 using Dapper;
 using NetDapperWebApi.Common.Interfaces;
 using NetDapperWebApi.DTO;
+using NetDapperWebApi.DTO.Creates.Rooms;
 using NetDapperWebApi.Entities;
 using NetDapperWebApi.Models;
 
@@ -21,19 +22,30 @@ namespace NetDapperWebApi.Services
 
         public async Task<Room> CreateRoom(RoomDTO room)
         {
-            var parameters = new DynamicParameters();
-            parameters.Add("@HotelID", room.HotelId);
-            parameters.Add("@RoomTypeId", room.RoomTypeId);
-            parameters.Add("@RoomNumber", room.RoomNumber);
-            parameters.Add("@Thumbnail", room.Thumbnail);
-            parameters.Add("@Images", room.Images);
-            parameters.Add("@Price", room.Price);
-            parameters.Add("@Status", room.Status);
+            var thumbnail="";
+            var images="";
+            try
+            {
+                var parameters = new DynamicParameters();
+                parameters.Add("@HotelID", room.HotelId);
+                parameters.Add("@RoomTypeId", room.RoomTypeId);
+                parameters.Add("@RoomNumber", room.RoomNumber);
+                parameters.Add("@Thumbnail", thumbnail);
+                parameters.Add("@Images", images);
+                parameters.Add("@Price", room.Price);
+                parameters.Add("@Status", room.Status);
 
 
-            var result = await _db.QueryFirstOrDefaultAsync<Room>(
-                "Rooms_Create", parameters, commandType: CommandType.StoredProcedure);
-            return result;
+                var result = await _db.QueryFirstOrDefaultAsync<Room>(
+                    "Rooms_Create", parameters, commandType: CommandType.StoredProcedure);
+                return result;
+                //images đang trả về dạng array image nên kh parse được
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
         }
 
         public async Task<bool> DeleteRoom(int id)
@@ -89,10 +101,10 @@ namespace NetDapperWebApi.Services
         }
 
 
-        public async Task<Room> UpdateRoom(int id, Room room)
+        public async Task<Room> UpdateRoom(int id, UpdateRoomDTO room)
         {
             var parameters = new DynamicParameters();
-            parameters.Add("@Id", room.Id);
+            parameters.Add("@Id", id);
             parameters.Add("@HotelID", room.HotelId);
             parameters.Add("@RoomTypeId", room.RoomTypeId);
             parameters.Add("@RoomNumber", room.RoomNumber);
@@ -100,7 +112,6 @@ namespace NetDapperWebApi.Services
             parameters.Add("@Images", room.Images);
             parameters.Add("@Price", room.Price);
             parameters.Add("@Status", room.Status);
-            parameters.Add("@UpdatedAt", room.UpdatedAt);
 
             var result = await _db.QueryFirstOrDefaultAsync<Room>(
                 "Rooms_Update", parameters, commandType: CommandType.StoredProcedure);
