@@ -85,10 +85,11 @@ namespace NetDapperWebApi.Services
                 var token = new TokenModel(
                       accessToken, refreshToken
                 );
+                var newUser=await _userService.GetUserById(user.Id,1);
                 // 7. Trả về AuthResponse
                 return new AuthResponse
                 {
-                    User = user,
+                    User = newUser,
                     Token = token
                 };
             }
