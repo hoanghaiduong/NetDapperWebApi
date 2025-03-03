@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using NetDapperWebApi.Common.Interfaces;
 using NetDapperWebApi.DTO;
 using NetDapperWebApi.DTO.Creates.Rooms;
+using NetDapperWebApi.DTO.Updates;
 using NetDapperWebApi.Entities;
 using NetDapperWebApi.Models;
 
@@ -20,7 +21,7 @@ namespace NetDapperWebApi.Controllers
         }
 
         [HttpPost]
-        public async Task<IResult> Create([FromForm] RoomDTO dto)
+        public async Task<IResult> Create([FromForm] CreateRoomDTO dto)
         {
             try
             {
@@ -37,9 +38,9 @@ namespace NetDapperWebApi.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IResult> GetById(int id)
+        public async Task<IResult> GetById([FromRoute]int id,[FromQuery] int depth=0)
         {
-            var room = await _roomService.GetRoom(id);
+            var room = await _roomService.GetRoom(id,depth);
             if (room == null) return Results.NotFound();
             return Results.Ok(room);
         }
@@ -54,8 +55,6 @@ namespace NetDapperWebApi.Controllers
         [HttpPut("{id}")]
         public async Task<IResult> Update(int id, [FromForm] UpdateRoomDTO room)
         {
-            var roomResult = await _roomService.GetRoom(id);
-            if (roomResult == null) return Results.NotFound();
             var result = await _roomService.UpdateRoom(id, room);
             return Results.Ok(new { message = result });
         }

@@ -3,50 +3,98 @@ using System.Text.Json.Serialization;
 using Dapper;
 using NetDapperWebApi.Common.Interfaces;
 using NetDapperWebApi.DTO;
+using NetDapperWebApi.DTO.Creates;
+using NetDapperWebApi.DTO.Updates;
 using NetDapperWebApi.Entities;
 using NetDapperWebApi.Models;
+using Newtonsoft.Json;
 
 namespace NetDapperWebApi.Services
 {
     public class HotelService : IHotelService
     {
         private readonly IDbConnection _db;
-        private readonly ILogger<HotelService> _logger;
 
-        public HotelService(IDbConnection db, ILogger<HotelService> logger)
+        private readonly ILogger<HotelService> _logger;
+        private readonly IFileUploadService _fileUploadService;
+        public HotelService(IDbConnection db, ILogger<HotelService> logger, IFileUploadService fileUploadService)
         {
             _db = db;
             _logger = logger;
+            _fileUploadService = fileUploadService;
         }
 
-        public async Task<Hotel> CreateHotel(HotelDTO hotel)
+        public async Task<Hotel> CreateHotel(CreateHotelDTO hotel)
         {
-            var parameters = new DynamicParameters();
-            parameters.Add("@Name", hotel.Name);
-            parameters.Add("@Address", hotel.Address);
-            parameters.Add("@Phone", hotel.Phone);
-            parameters.Add("@Email", hotel.Email);
-            parameters.Add("@Thumbnail", hotel.Thumbnail);
-            parameters.Add("@Images", hotel.Images);
-            parameters.Add("@Stars", hotel.Stars);
-            parameters.Add("@CheckinTime", hotel.CheckinTime);
-            parameters.Add("@CheckoutTime", hotel.CheckoutTime);
-            parameters.Add("@CreatedAt", hotel.CreatedAt);
-            parameters.Add("@UpdatedAt", hotel.UpdatedAt);
+            var thumbnail = string.Empty;
+            List<string> images = [];
+            try
+            {
+                if (hotel.Thumbnail != null)
+                {
+                    thumbnail = await _fileUploadService.UploadSingleFile(["uploads", "images", $"{nameof(Hotel)}s"], hotel.Thumbnail);
+                }
+                if (hotel.Images.Any())
+                {
+                    images = await _fileUploadService.UploadMultipleFiles(["uploads", "images", $"{nameof(Hotel)}s"], hotel.Images);
+                }
+                var imagesJson = JsonConvert.SerializeObject(images);
+                var parameters = new DynamicParameters();
+                parameters.Add("@Name", hotel.Name);
+                parameters.Add("@Address", hotel.Address);
+                parameters.Add("@Phone", hotel.Phone);
+                parameters.Add("@Email", hotel.Email);
+                parameters.Add("@Thumbnail", thumbnail);
+                parameters.Add("@Images", imagesJson);
+                parameters.Add("@Stars", hotel.Stars);
+                parameters.Add("@CheckinTime", hotel.CheckinTime);
+                parameters.Add("@CheckoutTime", hotel.CheckoutTime);
 
-            var result = await _db.QueryFirstOrDefaultAsync<Hotel>(
-                "Hotels_Create", parameters, commandType: CommandType.StoredProcedure);
-            return result;
+
+                var result = await _db.QueryFirstOrDefaultAsync<Hotel>(
+                    "Hotels_Create", parameters, commandType: CommandType.StoredProcedure);
+                return result;
+            }
+            catch (Exception)
+            {
+                if (!string.IsNullOrEmpty(thumbnail))
+                {
+                    _fileUploadService.DeleteSingleFile(thumbnail);
+                }
+                if (images.Count != 0)
+                {
+                    _fileUploadService.DeleteMultipleFiles(images);
+                }
+                throw;
+            }
         }
 
         public async Task<bool> DeleteHotel(int id)
         {
+            var existingHotel = await GetHotel(id, 0);
+            if (existingHotel == null)
+            {
+                return false; // ✅ Nếu không tìm thấy khách sạn, trả về false
+            }
+
+            // ✅ Xóa hình ảnh trước khi xóa khách sạn
+            if (!string.IsNullOrEmpty(existingHotel.Thumbnail))
+            {
+                _fileUploadService.DeleteSingleFile(existingHotel.Thumbnail);
+            }
+
+            if (existingHotel.ImageList?.Any() == true)
+            {
+                _fileUploadService.DeleteMultipleFiles(existingHotel.ImageList);
+            }
+
             var parameters = new DynamicParameters();
             parameters.Add("@Id", id);
-            var result = await _db.QueryFirstOrDefaultAsync<bool>(
-                "Hotels_Delete", parameters, commandType: CommandType.StoredProcedure);
-            return result;
+            var result = await _db.ExecuteAsync("Hotels_Delete", parameters, commandType: CommandType.StoredProcedure);
+
+            return result == -1 ? true : false; // ✅ Trả về true nếu có dòng bị ảnh hưởng (xóa thành công)
         }
+
 
         public async Task<PaginatedResult<Hotel>> GetAllHotels(PaginationModel paginationModel)
         {
@@ -135,26 +183,90 @@ namespace NetDapperWebApi.Services
 
             return hotel;
         }
-
-        public async Task<Hotel> UpdateHotel(Hotel hotel)
+        public async Task<Hotel> UpdateHotel(int id, UpdateHotelDTO dto)
         {
-            var parameters = new DynamicParameters();
-            parameters.Add("@Id", hotel.Id);
-            parameters.Add("@Name", hotel.Name);
-            parameters.Add("@Address", hotel.Address);
-            parameters.Add("@Phone", hotel.Phone);
-            parameters.Add("@Email", hotel.Email);
-            parameters.Add("@Thumbnail", hotel.Thumbnail);
-            parameters.Add("@Images", hotel.Images);
-            parameters.Add("@Stars", hotel.Stars);
-            parameters.Add("@CheckinTime", hotel.CheckinTime);
-            parameters.Add("@CheckoutTime", hotel.CheckoutTime);
-            parameters.Add("@UpdatedAt", hotel.UpdatedAt);
+            var existingHotel = await GetHotel(id, 0) ?? throw new Exception("Hotel not found");
 
-            var result = await _db.QueryFirstOrDefaultAsync<Hotel>(
-                "Hotels_Update", parameters, commandType: CommandType.StoredProcedure);
-            return result;
+            List<string> uploadedImagesUrls = new();
+            string thumbnail = existingHotel.Thumbnail;
+
+            try
+            {
+                // ✅ Cập nhật Thumbnail nếu có
+                if (dto.Thumbnail != null)
+                {
+                    if (!string.IsNullOrEmpty(thumbnail))
+                    {
+                        _fileUploadService.DeleteSingleFile(thumbnail);
+                    }
+
+                    thumbnail = await _fileUploadService.UploadSingleFile(["uploads", "images", $"{nameof(Hotel)}s"], dto.Thumbnail);
+                    uploadedImagesUrls.Add(thumbnail);
+                }
+
+                // ✅ Xử lý danh sách ảnh
+                List<string> currentImages = existingHotel.ImageList ?? new();
+                List<string> keptImages = dto.KeptImages ?? new();
+                List<string> updatedImageList;
+
+                // ❌ Nếu không truyền ảnh giữ lại -> Xóa tất cả ảnh cũ
+                if (!keptImages.Any())
+                {
+                    _fileUploadService.DeleteMultipleFiles(currentImages);
+                    updatedImageList = new();
+                }
+                else
+                {
+                    // ✅ Xóa ảnh không nằm trong danh sách keptImages
+                    var imagesToDelete = currentImages.Except(keptImages).ToList();
+                    if (imagesToDelete.Any())
+                    {
+                        _fileUploadService.DeleteMultipleFiles(imagesToDelete);
+                    }
+
+                    // ✅ Giữ lại ảnh cũ cần thiết
+                    List<string> retainedImages = currentImages.Intersect(keptImages).ToList();
+                    updatedImageList = retainedImages;
+                }
+
+                // ✅ Tải lên ảnh mới (nếu có)
+                if (dto?.Images?.Any() == true)
+                {
+                    var newImages = await _fileUploadService.UploadMultipleFiles(["uploads", "images", $"{nameof(Hotel)}s"], dto.Images);
+                    uploadedImagesUrls.AddRange(newImages); // Thêm vào danh sách rollback nếu lỗi
+                    updatedImageList.AddRange(newImages);
+                }
+
+                // ✅ Cập nhật vào DB
+                var parameters = new DynamicParameters();
+                parameters.Add("@Id", id);
+                parameters.Add("@Name", dto.Name);
+                parameters.Add("@Address", dto.Address);
+                parameters.Add("@Phone", dto.Phone);
+                parameters.Add("@Email", dto.Email);
+                parameters.Add("@Thumbnail", thumbnail);
+                parameters.Add("@Images", JsonConvert.SerializeObject(updatedImageList));
+                parameters.Add("@Stars", dto.Stars);
+                parameters.Add("@CheckinTime", dto.CheckinTime);
+                parameters.Add("@CheckoutTime", dto.CheckoutTime);
+
+                var result = await _db.QueryFirstOrDefaultAsync<Hotel>(
+                    "Hotels_Update", parameters, commandType: CommandType.StoredProcedure);
+
+                return result;
+            }
+            catch
+            {
+                // ✅ Nếu lỗi, rollback ảnh đã tải lên nhưng chưa lưu vào DB
+                if (uploadedImagesUrls.Any())
+                {
+                    _fileUploadService.DeleteMultipleFiles(uploadedImagesUrls);
+                }
+
+                throw;
+            }
         }
+
     }
 
 }

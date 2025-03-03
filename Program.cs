@@ -9,12 +9,8 @@ namespace WebApi
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
-          
-            
             builder.Services.AddWebServices(builder.Configuration).AddAuthentications(builder.Configuration);
-
             builder.Services.AddSwaggerExplorers(builder.Configuration);
-    
             //--------------------------------------------
             var app = builder.Build();
             app.UseCustomExtensions();

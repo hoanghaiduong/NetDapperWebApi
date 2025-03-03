@@ -7,24 +7,22 @@ using NetDapperWebApi.Entities;
 
 namespace NetDapperWebApi.DTO
 {
-    public class HotelDTO : BaseEntity<int>
+    public class HotelDTO
     {
         [Required]
         public string Name { get; set; }
-
-        public string? Address { get; set; }
-
-
-        public string? Phone { get; set; }
-
+        public string Address { get; set; }
+        public string Phone { get; set; }
         [Required]
         public string Email { get; set; } = null!;
 
-        public string? Thumbnail { get; set; }
-        public string? Images { get; set; }
-        public int? Stars { get; set; }
-        public string? CheckinTime { get; set; }
-        public string? CheckoutTime { get; set; }
+        [Required]
+        public IFormFile? Thumbnail { get; set; }
+        [Required]
+        public List<IFormFile>? Images { get; set; }
+        public int Stars { get; set; }
+        public string CheckinTime { get; set; }
+        public string CheckoutTime { get; set; }
     }
 
 }

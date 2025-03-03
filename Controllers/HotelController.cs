@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using NetDapperWebApi.Common.Interfaces;
 using NetDapperWebApi.DTO;
+using NetDapperWebApi.DTO.Creates;
+using NetDapperWebApi.DTO.Updates;
 using NetDapperWebApi.Entities;
 using NetDapperWebApi.Models;
 
@@ -23,7 +25,7 @@ namespace NetDapperWebApi.Controllers
             _logger = logger;
         }
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] HotelDTO hotel)
+        public async Task<IActionResult> Create([FromForm] CreateHotelDTO hotel)
         {
             var result = await _hotelService.CreateHotel(hotel);
             return Ok(new { message = result });
@@ -62,18 +64,26 @@ namespace NetDapperWebApi.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] Hotel hotel)
+        public async Task<IActionResult> Update([FromRoute] int id, [FromForm] UpdateHotelDTO hotel)
         {
-            if (id != hotel.Id) return BadRequest();
-            var result = await _hotelService.UpdateHotel(hotel);
+
+            var result = await _hotelService.UpdateHotel(id, hotel);
             return Ok(new { message = result });
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _hotelService.DeleteHotel(id);
-            return Ok(new { message = result });
+            try
+            {
+                var result = await _hotelService.DeleteHotel(id);
+                return result ? Ok(new { message = $"Xoá Hotel với id={id} thành công" }) : BadRequest();
+            }
+            catch (System.Exception)
+            {
+
+                throw;
+            }
         }
     }
 }

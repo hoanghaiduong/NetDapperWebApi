@@ -23,7 +23,6 @@ namespace NetDapperWebApi
         private static readonly string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
         public static IServiceCollection AddWebServices(this IServiceCollection services, IConfiguration configuration)
         {
-
             services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
             services.AddScoped<IDbConnection>(cnn => new SqlConnection(configuration.GetConnectionString("DefaultConnection")));
             services.AddScoped<IRoomTypeService, RoomTypeService>();
@@ -34,6 +33,7 @@ namespace NetDapperWebApi
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IFileUploadService, FileUploadService>();
             services.AddScoped<IImageService, ImageService>();
+             services.AddScoped<ICategoryService, CategoryService>();
 
             // services.AddFluentValidationAutoValidation();
             // services.AddValidatorsFromAssemblyContaining<CreateMultipleImageValidator>();
