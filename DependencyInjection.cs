@@ -33,8 +33,8 @@ namespace NetDapperWebApi
             services.AddScoped<IUserService, UserService>();
             services.AddScoped<IFileUploadService, FileUploadService>();
             services.AddScoped<IImageService, ImageService>();
-             services.AddScoped<ICategoryService, CategoryService>();
-
+            services.AddScoped<ICategoryService, CategoryService>();
+            services.AddScoped<ICategoryDetailsService, CategoryDetailsService>();
             // services.AddFluentValidationAutoValidation();
             // services.AddValidatorsFromAssemblyContaining<CreateMultipleImageValidator>();
 

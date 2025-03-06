@@ -27,6 +27,22 @@ namespace NetDapperWebApi.Services
             _fileService = fileService;
         }
 
+
+        public async Task<string> AddCategoryToRoomAsync(AddRelationsMM<int, int> dto)
+        {
+            // Serialize danh sách CategoryIds thành JSON
+            string jsonCategories = System.Text.Json.JsonSerializer.Serialize(dto.Ids); // Ví dụ: "[1,2,3]"
+
+            var parameters = new DynamicParameters();
+            parameters.Add("@RoomId", dto.EntityId, DbType.Int32);
+            parameters.Add("@CategoryJson", jsonCategories, DbType.String);
+
+            var result = await _db.QueryFirstOrDefaultAsync<string>("sp_AddRoomCategories", parameters, commandType: CommandType.StoredProcedure);
+
+            return result;
+        }
+
+
         public async Task<Room> CreateRoom(CreateRoomDTO room)
         {
             var thumbnail = string.Empty;
@@ -95,12 +111,15 @@ namespace NetDapperWebApi.Services
                 room.Hotel = await multi.ReadSingleAsync<Hotel>();
                 room.RoomType = await multi.ReadSingleAsync<RoomType>();
                 room.Bookings = (await multi.ReadAsync<Booking>()).ToList();
+                room.Categories = (await multi.ReadAsync<Category>()).ToList();
+                // Đọc danh sách CategoryDetails từ result set tiếp theo
+                var allDetails = (await multi.ReadAsync<CategoryDetails>()).ToList();
+                foreach (var cat in room.Categories)
+                {
+                    cat.Details = [.. allDetails.Where(d => d.CategoryId == cat.Id)];
+                }
             }
-            // if (room.Images != null && room.Images.Length != 0)
-            // {
-            //     if (room.Images.StartsWith("["))
-            //         room.ImageList = JsonConvert.DeserializeObject<List<string>>(room.Images);
-            // }
+
             return room;
 
         }
@@ -214,7 +233,7 @@ namespace NetDapperWebApi.Services
 
                 var result = await _db.QueryFirstOrDefaultAsync<Room>(
                     "Rooms_Update", parameters, commandType: CommandType.StoredProcedure);
-             
+
                 return result;
             }
             catch (Exception ex)

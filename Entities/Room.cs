@@ -39,7 +39,8 @@ namespace NetDapperWebApi.Entities
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public virtual ICollection<Booking> Bookings { get; set; } = [];
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public virtual ICollection<Category> Categories { get; set; } = [];
+        public virtual List<Category> Categories { get; set; } = [];
+        
         // ✅ Cột JSON lưu trữ dưới dạng string trong DB
         [JsonIgnore]
         public string Images { get; set; }

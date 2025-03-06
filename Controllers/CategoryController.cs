@@ -8,6 +8,7 @@ using NetDapperWebApi.DTO;
 using NetDapperWebApi.DTO.Creates;
 using NetDapperWebApi.DTO.Updates;
 using NetDapperWebApi.Entities;
+using NetDapperWebApi.Models;
 
 namespace NetDapperWebApi.Controllers
 {
@@ -21,6 +22,13 @@ namespace NetDapperWebApi.Controllers
         {
             _categoryService = categoryService;
         }
+        // Endpoint mới: Lấy cây danh mục kèm chi tiết dưới dạng kiểu dữ liệu (DTO)
+        [HttpGet("tree/details")]
+        public async Task<IActionResult> GetCategoryTreeWithDetails([FromQuery] int? maxDepth)
+        {
+            var result = await _categoryService.GetCategoryTreeWithDetailsAsync(maxDepth);
+            return Ok(result);
+        }
         private Category BuildTree(Category parent, IEnumerable<Category> allCategories)
         {
             parent.Children = allCategories.Where(c => c.ParentId == parent.Id).ToList();
@@ -32,27 +40,27 @@ namespace NetDapperWebApi.Controllers
         }
 
         [HttpGet("tree")]
-        public async Task<IActionResult> GetTree()
+        public async Task<IActionResult> GetTree([FromQuery] PaginationModel dto)
         {
-            var categories = await _categoryService.GetAllCategoriesAsync();
-            var tree = categories
+            var results = await _categoryService.GetAllCategoriesAsync(dto);
+            var items = results.Items
                 .Where(c => c.ParentId == null)
-                .Select(c => BuildTree(c, categories))
+                .Select(c => BuildTree(c, results.Items))
                 .ToList();
-
-            return Ok(tree);
+            results.Items = items;
+            return Ok(results);
         }
         [HttpGet]
-        public async Task<IActionResult> GetAllCategories()
+        public async Task<IActionResult> GetAllCategories([FromQuery] PaginationModel dto)
         {
-            var categories = await _categoryService.GetAllCategoriesAsync();
+            var categories = await _categoryService.GetAllCategoriesAsync(dto);
             return Ok(categories);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetCategoryById(int id)
+        public async Task<IActionResult> GetCategoryById([FromRoute] int id, [FromQuery] int depth = 0)
         {
-            var category = await _categoryService.GetCategoryByIdAsync(id);
+            var category = await _categoryService.GetCategoryByIdAsync(id, depth);
             if (category == null) return NotFound();
             return Ok(category);
         }
@@ -61,24 +69,26 @@ namespace NetDapperWebApi.Controllers
         public async Task<IActionResult> CreateCategory([FromBody] CreateCategoryDTO category)
         {
             var result = await _categoryService.CreateCategoryAsync(category);
-            return Ok(new {result});
+            return Ok(new { result });
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateCategory([FromRoute]int id, [FromBody] UpdateCategoryDTO category)
+        public async Task<IActionResult> UpdateCategory([FromRoute] int id, [FromBody] UpdateCategoryDTO category)
         {
-        
-            var result = await _categoryService.UpdateCategoryAsync(id,category);
+
+            var result = await _categoryService.UpdateCategoryAsync(id, category);
             if (result == null) return NotFound();
-            return NoContent();
+            return Ok(result);
         }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCategory(int id)
         {
-            var result = await _categoryService.DeleteCategoryAsync(id);
-            if (!result) return NotFound();
-            return NoContent();
+            await _categoryService.DeleteCategoryAsync(id);
+            return Ok(new
+            {
+                message = $"Xoá danh mục với id = {id} thành công !"
+            });
         }
 
 

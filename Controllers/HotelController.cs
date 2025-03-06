@@ -30,7 +30,13 @@ namespace NetDapperWebApi.Controllers
             var result = await _hotelService.CreateHotel(hotel);
             return Ok(new { message = result });
         }
-
+        // Endpoint để thêm các category vào Hotel
+        [HttpPost("addCategories")]
+        public async Task<IActionResult> AddCategoryToHotel([FromBody] AddRelationsMM<int, int> dto)
+        {
+            var result = await _hotelService.AddCategoryToHotelAsync(dto);
+            return Ok(new { result });
+        }
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id, [FromQuery] int depth = 0)
         {

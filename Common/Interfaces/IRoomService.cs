@@ -8,6 +8,7 @@ namespace NetDapperWebApi.Common.Interfaces
 {
     public interface IRoomService
     {
+        Task<string> AddCategoryToRoomAsync(AddRelationsMM<int,int> dto);
         Task<Room> CreateRoom(CreateRoomDTO Room);
         Task<Room> GetRoom(int id,int depth);
         Task<PaginatedResult<Room>> GetRooms(PaginationModel dto);

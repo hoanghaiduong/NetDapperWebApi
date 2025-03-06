@@ -24,6 +24,18 @@ namespace NetDapperWebApi.Services
             _fileUploadService = fileUploadService;
         }
 
+        public async Task<string> AddCategoryToHotelAsync(AddRelationsMM<int, int> dto)
+        {
+
+            // Serialize danh sách CategoryIds thành JSON
+            string jsonCategories = System.Text.Json.JsonSerializer.Serialize(dto?.Ids); // Ví dụ: "[1,2,3]"
+            var parameters = new DynamicParameters();
+            parameters.Add("@HotelId", dto.EntityId);
+            parameters.Add("@CategoryJson", jsonCategories);
+            var result = await _db.QueryFirstOrDefaultAsync<string>("sp_AddHotelCategories", parameters, commandType: CommandType.StoredProcedure);
+            return result;
+        }
+
         public async Task<Hotel> CreateHotel(CreateHotelDTO hotel)
         {
             var thumbnail = string.Empty;

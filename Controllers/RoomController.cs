@@ -26,7 +26,7 @@ namespace NetDapperWebApi.Controllers
             try
             {
                 var result = await _roomService.CreateRoom(dto);
-                return Results.Ok(new { message = result });
+                return Results.Ok(new { result });
             }
             catch (Exception ex)
             {
@@ -38,9 +38,9 @@ namespace NetDapperWebApi.Controllers
         }
 
         [HttpGet("{id}")]
-        public async Task<IResult> GetById([FromRoute]int id,[FromQuery] int depth=0)
+        public async Task<IResult> GetById([FromRoute] int id, [FromQuery] int depth = 0)
         {
-            var room = await _roomService.GetRoom(id,depth);
+            var room = await _roomService.GetRoom(id, depth);
             if (room == null) return Results.NotFound();
             return Results.Ok(room);
         }
@@ -64,6 +64,14 @@ namespace NetDapperWebApi.Controllers
         {
             var result = await _roomService.DeleteRoom(id);
             return Results.Ok(new { message = result });
+        }
+
+        // Endpoint để thêm các category vào room
+        [HttpPost("addCategories")]
+        public async Task<IActionResult> AddCategoryToRoom([FromBody] AddRelationsMM<int, int> dto)
+        {
+            var result = await _roomService.AddCategoryToRoomAsync(dto);
+            return Ok(new { Message = "Categories đã được thêm vào room thành công.", result });
         }
     }
 }
