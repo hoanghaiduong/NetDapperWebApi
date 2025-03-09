@@ -28,19 +28,7 @@ namespace NetDapperWebApi.Services
         }
 
 
-        public async Task<string> AddCategoryToRoomAsync(AddRelationsMM<int, int> dto)
-        {
-            // Serialize danh sách CategoryIds thành JSON
-            string jsonCategories = System.Text.Json.JsonSerializer.Serialize(dto.Ids); // Ví dụ: "[1,2,3]"
 
-            var parameters = new DynamicParameters();
-            parameters.Add("@RoomId", dto.EntityId, DbType.Int32);
-            parameters.Add("@CategoryJson", jsonCategories, DbType.String);
-
-            var result = await _db.QueryFirstOrDefaultAsync<string>("sp_AddRoomCategories", parameters, commandType: CommandType.StoredProcedure);
-
-            return result;
-        }
 
 
         public async Task<Room> CreateRoom(CreateRoomDTO room)
@@ -53,16 +41,23 @@ namespace NetDapperWebApi.Services
 
             try
             {
-                thumbnail = room.Thumbnail != null ? await _fileService.UploadSingleFile(["uploads", "images", $"{nameof(Room)}s"], room.Thumbnail) : null;
-                images = await _fileService.UploadMultipleFiles(["uploads", "images", $"{nameof(Room)}s"], room.Images);
+                if (room.Thumbnail != null)
+                {
+                    thumbnail = room.Thumbnail != null ? await _fileService.UploadSingleFile(["uploads", "images", $"{nameof(Room)}s"], room.Thumbnail) : null;
+
+                }
+                if (room.Images != null && room.Images.Any())
+                {
+                    images = await _fileService.UploadMultipleFiles(["uploads", "images", $"{nameof(Room)}s"], room.Images);
+                }
                 var imagesJson = JsonConvert.SerializeObject(images);
                 var parameters = new DynamicParameters();
-                parameters.Add("@HotelID", room.HotelId);
                 parameters.Add("@RoomTypeId", room.RoomTypeId);
                 parameters.Add("@RoomNumber", room.RoomNumber);
                 parameters.Add("@Thumbnail", thumbnail);
                 parameters.Add("@Images", imagesJson);
-                parameters.Add("@Price", room.Price);
+                parameters.Add("@PricePerHour", room.PricePerHour);
+                parameters.Add("@Floor", room.Floor);
                 parameters.Add("@Status", room.Status);
 
 
@@ -108,16 +103,13 @@ namespace NetDapperWebApi.Services
 
             if (depth >= 1)
             {
-                room.Hotel = await multi.ReadSingleAsync<Hotel>();
+
                 room.RoomType = await multi.ReadSingleAsync<RoomType>();
                 room.Bookings = (await multi.ReadAsync<Booking>()).ToList();
-                room.Categories = (await multi.ReadAsync<Category>()).ToList();
-                // Đọc danh sách CategoryDetails từ result set tiếp theo
-                var allDetails = (await multi.ReadAsync<CategoryDetails>()).ToList();
-                foreach (var cat in room.Categories)
-                {
-                    cat.Details = [.. allDetails.Where(d => d.CategoryId == cat.Id)];
-                }
+            
+                // // Đọc danh sách CategoryDetails từ result set tiếp theo
+                // var allDetails = (await multi.ReadAsync<CategoryDetails>()).ToList();
+             
             }
 
             return room;
@@ -139,26 +131,16 @@ namespace NetDapperWebApi.Services
 
             var totalCount = await multi.ReadFirstOrDefaultAsync<int>(); // Đọc TotalCount
             var rooms = (await multi.ReadAsync<Room>()).ToList(); // Đọc danh sách Rooms
-                                                                  // Xử lý ImagesList cho tất cả rooms ngay lập tức, không phụ thuộc vào Depth\
+                                                                  // Xử lý ImagesList cho tất cả rooms ngay lập tức, không phụ thuộc vào Depth
+            //lấy roomType của từng phòng 
 
-            // foreach (var room in rooms)
-            // {
-            //     if (room.Images != null && room.Images.Any())
-            //     {
-            //         if (room.Images.StartsWith("["))
-            //             room.ImageList = JsonConvert.DeserializeObject<List<string>>(room.Images);
-            //     }
-
-            // }
-            if (rooms.Any() && paginationModel.Depth >= 1)
+            if (rooms.Count != 0 && paginationModel.Depth >= 1)
             {
-                var hotels = (await multi.ReadAsync<Hotel>()).ToDictionary(h => h.Id);
-                var roomTypes = (await multi.ReadAsync<RoomType>()).ToDictionary(rt => rt.Id);
+                var roomTypes = (await multi.ReadAsync<RoomType>()).ToList();//2 phòng
 
                 foreach (var room in rooms)
                 {
-                    room.Hotel = hotels.GetValueOrDefault(room.HotelId);
-                    room.RoomType = roomTypes.GetValueOrDefault(room.RoomTypeId);
+                    room.RoomType = roomTypes.Where(x=>x.Id==room.RoomTypeId).FirstOrDefault();
                 }
             }
 
@@ -220,14 +202,14 @@ namespace NetDapperWebApi.Services
                 var imagesJson = JsonConvert.SerializeObject(finalImagesList);
                 var parameters = new DynamicParameters();
                 parameters.Add("@Id", id);
-                if (room.HotelId != null)
-                    parameters.Add("@HotelID", room.HotelId);
+
                 if (room.RoomTypeId != null)
                     parameters.Add("@RoomTypeId", room.RoomTypeId);
                 parameters.Add("@RoomNumber", room.RoomNumber);
                 parameters.Add("@Thumbnail", thumbnail);
                 parameters.Add("@Images", imagesJson);
-                parameters.Add("@Price", room.Price);
+                parameters.Add("@PricePerHour", room.PricePerHour);
+                parameters.Add("@Floor", room.Floor);
                 parameters.Add("@Status", room.Status);
                 parameters.Add("@UpdatedAt", DateTime.UtcNow);
 

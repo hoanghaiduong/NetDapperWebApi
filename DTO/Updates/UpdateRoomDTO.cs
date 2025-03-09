@@ -18,8 +18,9 @@ namespace NetDapperWebApi.DTO.Updates
         // ✅ Danh sách ảnh cũ cần giữ lại (chỉ chứa URL)
         public List<string>? KeptImages { get; set; }
 
-        [Range(0, double.MaxValue)]
-        public decimal? Price { get; set; }
+
+        public int? Floor { get; set; }
+        public decimal? PricePerHour { get; set; }
         [AllowedValues(values: [0, 1, 2])]
         public int? Status { get; set; }
 

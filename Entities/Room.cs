@@ -12,9 +12,7 @@ namespace NetDapperWebApi.Entities
 {
     public class Room : BaseEntity<int>
     {
-        [JsonIgnore]
-
-        public int HotelId { get; set; }
+     
 
         [JsonIgnore]
         public int RoomTypeId { get; set; }
@@ -24,26 +22,21 @@ namespace NetDapperWebApi.Entities
         [Required, MaxLength(20)]
         public string RoomNumber { get; set; }
 
-        public string Thumbnail { get; set; }
-        public int Size { get; set; }
-        public int Beds { get; set; }
-        public int Guests { get; set; }
-        public decimal Price { get; set; }
+        public string? Thumbnail { get; set; }
+        public int? Floor {get;set;}
+        public decimal PricePerHour { get; set; }
         public ERoomStatus Status { get; set; } = ERoomStatus.Ready;
 
-        // Navigation Properties
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public virtual Hotel? Hotel { get; set; } = null;
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public virtual RoomType? RoomType { get; set; } = null;
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public virtual ICollection<Booking> Bookings { get; set; } = [];
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public virtual List<Category> Categories { get; set; } = [];
+      
+    
         
         // ✅ Cột JSON lưu trữ dưới dạng string trong DB
         [JsonIgnore]
-        public string Images { get; set; }
+        public string? Images { get; set; }
 
         // ✅ Chuyển đổi JSON string thành List<string>
         [NotMapped]
@@ -55,7 +48,6 @@ namespace NetDapperWebApi.Entities
             {
                 if (string.IsNullOrWhiteSpace(Images) || !Images.StartsWith("["))
                     return []; // Nếu null hoặc không phải JSON, trả về list rỗng
-
                 return Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(Images);
             }
 

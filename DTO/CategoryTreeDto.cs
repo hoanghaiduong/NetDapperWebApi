@@ -22,7 +22,7 @@ namespace NetDapperWebApi.DTO
         public int CategoryId { get; set; } // dùng để ghép nối với CategoryTreeDto
         public string DetailName { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
-        public decimal Price { get; set; }
+
     }
 
 }

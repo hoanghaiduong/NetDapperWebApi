@@ -66,12 +66,6 @@ namespace NetDapperWebApi.Controllers
             return Results.Ok(new { message = result });
         }
 
-        // Endpoint để thêm các category vào room
-        [HttpPost("addCategories")]
-        public async Task<IActionResult> AddCategoryToRoom([FromBody] AddRelationsMM<int, int> dto)
-        {
-            var result = await _roomService.AddCategoryToRoomAsync(dto);
-            return Ok(new { Message = "Categories đã được thêm vào room thành công.", result });
-        }
+    
     }
 }

@@ -34,26 +34,16 @@ namespace NetDapperWebApi.Services
 
         public async Task<CategoryDetails> CreateCategoryDetailsAsync(CreateCategoryDetailsDTO dto)
         {
-            var sql = @"
-                INSERT INTO CategoryDetails (CategoryId, Name, Description, Price)
-                VALUES (@CategoryId, @Name, @Description, @Price);
-                SELECT CAST(SCOPE_IDENTITY() as int);";
-            var id = await _db.ExecuteScalarAsync<int>(sql, new
+            var sql = @"CategoryDetails_Create";
+            var result = await _db.QueryFirstOrDefaultAsync<CategoryDetails>(sql, new
             {
                 dto.CategoryId,
                 dto.Name,
                 dto.Description,
-                dto.Price
-            });
+                dto.Icon
+            },commandType: CommandType.StoredProcedure);
 
-            return new CategoryDetails
-            {
-                Id = id,
-                CategoryId = dto.CategoryId,
-                Name = dto.Name,
-                Description = dto.Description,
-                Price = dto.Price ?? 0
-            };
+            return result;
         }
 
         public async Task<CategoryDetails?> UpdateCategoryDetailsAsync(int id, UpdateCategoryDetailsDTO dto)

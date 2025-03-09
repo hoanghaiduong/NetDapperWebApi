@@ -10,7 +10,7 @@ namespace NetDapperWebApi.Common.Interfaces
 {
     public interface IHotelService
     {
-        Task<string> AddCategoryToHotelAsync(AddRelationsMM<int, int> dto);
+        Task<string> AddCategoryDetailToHotelAsync(AddRelationsMM<int, int> dto);
         Task<Hotel> CreateHotel(CreateHotelDTO hotel);
         Task<Hotel> GetHotel(int id, int depth);
         Task<PaginatedResult<Hotel>> GetAllHotels(PaginationModel paginationModel);

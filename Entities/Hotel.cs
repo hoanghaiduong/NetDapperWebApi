@@ -11,30 +11,23 @@ namespace NetDapperWebApi.Entities
 {
     public class Hotel : BaseEntity<int>
     {
-        [Required]
         public string Name { get; set; }
-
+        public int Quantity { get; set; }
+        public string? Description { get; set; }
         public string? Address { get; set; }
-
         public string? Location { get; set; }
         public string? Phone { get; set; }
-
-        [Required]
         public string Email { get; set; } = null!;
-
         public string? Thumbnail { get; set; }
         [JsonIgnore]
         public string? Images { get; set; }
+        public int? Floor { get; set; }
         public int? Stars { get; set; }
         public string? CheckinTime { get; set; }
         public string? CheckoutTime { get; set; }
 
-        // Navigation Properties
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public virtual IList<Room>? Rooms { get; set; } = null;
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public virtual IList<User>? Users { get; set; } = null;//employee,guest,admin
-
 
         // ✅ Chuyển đổi JSON string thành List<string>
         [NotMapped]
@@ -50,6 +43,12 @@ namespace NetDapperWebApi.Entities
                 return Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(Images);
             }
         }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+
+        public List<RoomType> RoomTypes { get; set; } = new List<RoomType>();
+
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public virtual List<CategoryDetails> Amenities { get; set; } = new List<CategoryDetails>();
     }
 
 }

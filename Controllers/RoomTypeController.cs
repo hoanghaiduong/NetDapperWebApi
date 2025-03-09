@@ -6,6 +6,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using NetDapperWebApi.Common.Interfaces;
 using NetDapperWebApi.DTO;
+using NetDapperWebApi.DTO.Creates;
+using NetDapperWebApi.DTO.Updates;
 using NetDapperWebApi.Entities;
 using NetDapperWebApi.Models;
 using NetDapperWebApi.Services;
@@ -25,9 +27,16 @@ namespace NetDapperWebApi.Controllers
             _logger = logger;
         }
 
+        // Endpoint để thêm các category vào room
+        [HttpPost("addCategoryDetail")]
+        public async Task<IActionResult> AddCategoryDetailToRoomTypeAsync([FromBody] AddRelationsMM<int, int> dto)
+        {
+            var result = await _roomTypeService.AddCategoryDetailToRoomTypeAsync(dto);
+            return Ok(new { Message = "Categories đã được thêm vào roomType thành công.", result });
+        }
         // ✅ Tạo RoomType (201 Created)
         [HttpPost]
-        public async Task<IResult> CreateRoomType([FromBody] RoomTypeDTO roomType)
+        public async Task<IResult> CreateRoomType([FromForm] CreateRoomTypeDTO roomType)
         {
             try
             {
@@ -50,21 +59,21 @@ namespace NetDapperWebApi.Controllers
 
         // ✅ Lấy RoomType theo ID
         [HttpGet("{id:int}")]
-        public async Task<IResult> GetRoomTypeById(int id)
+        public async Task<IResult> GetRoomTypeById([FromRoute] int id,[FromQuery] int depth = 0)
         {
-            var roomType = await _roomTypeService.GetRoomType(id);
+            var roomType = await _roomTypeService.GetRoomType(id,depth);
             return roomType == null
                 ? Results.NotFound(new { message = "RoomType not found" })
                 : Results.Ok(roomType);
         }
-        [HttpGet("{id}/withrooms")]
-        public async Task<IActionResult> GetByIdWithRooms(int id, [FromQuery] int depth = 0)
-        {
-            var roomType = await _roomTypeService.GetRoomTypeWithRooms(id, depth);
-            if (roomType == null)
-                return NotFound();
-            return Ok(roomType);
-        }
+        // [HttpGet("{id}/withrooms")]
+        // public async Task<IActionResult> GetByIdWithRooms(int id, [FromQuery] int depth = 0)
+        // {
+        //     var roomType = await _roomTypeService.GetRoomTypeWithRooms(id, depth);
+        //     if (roomType == null)
+        //         return NotFound();
+        //     return Ok(roomType);
+        // }
 
         // ✅ Lấy danh sách RoomType (Có phân trang)
         [HttpGet]
@@ -76,10 +85,10 @@ namespace NetDapperWebApi.Controllers
 
         // ✅ Cập nhật RoomType (204 No Content)
         [HttpPut("{id:int}")]
-        public async Task<IResult> UpdateRoomType(int id, [FromBody] RoomTypeDTO roomType)
+        public async Task<IResult> UpdateRoomType(int id, [FromForm] UpdateRoomTypeDTO roomType)
         {
-            roomType.Id = id;
-            var success = await _roomTypeService.UpdateRoomType(roomType);
+
+            var success = await _roomTypeService.UpdateRoomType(id, roomType);
             return success != null
                 ? Results.Ok(new
                 {
