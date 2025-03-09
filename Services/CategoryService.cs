@@ -71,14 +71,14 @@ namespace NetDapperWebApi.Services
             return tree.ToList();
         }
 
-        public async Task<PaginatedResult<Category>> GetAllCategoriesAsync(PaginationModel pagination)
+        public async Task<PaginatedResult<Category>> GetAllCategoriesAsync(PaginationModel dto)
         {
 
             var parameters = new DynamicParameters();
-            parameters.Add("@PageNumber", pagination.PageNumber, DbType.Int32);
-            parameters.Add("@PageSize", pagination.PageSize, DbType.Int32);
-            parameters.Add("@Depth", pagination.Depth, DbType.Int32);
-            parameters.Add("@Search", pagination.Search ?? "", DbType.String);
+            parameters.Add("@PageNumber", dto.PageNumber, DbType.Int32);
+            parameters.Add("@PageSize", dto.PageSize, DbType.Int32);
+            parameters.Add("@Depth", dto.Depth, DbType.Int32);
+            parameters.Add("@Search", dto.Search ?? "", DbType.String);
 
             using var multi = await _db.QueryMultipleAsync(
                 "Category_GetAll",
@@ -92,7 +92,7 @@ namespace NetDapperWebApi.Services
             var categories = (await multi.ReadAsync<Category>()).ToList();
 
             // Nếu Depth >= 1, lấy CategoryDetails cho các Category hiện có
-            if (pagination.Depth >= 1)
+            if (dto.Depth >= 1)
             {
                 var details = (await multi.ReadAsync<CategoryDetails>()).ToList();
                 foreach (var category in categories)
@@ -101,23 +101,23 @@ namespace NetDapperWebApi.Services
                 }
             }
 
-            // Nếu Depth >= 2, lấy danh sách Children cho các Category (nếu stored procedure trả về result set này)
-            if (pagination.Depth >= 2)
-            {
-                var children = (await multi.ReadAsync<Category>()).ToList();
-                // Gán các category con vào property Children của category cha
-                // Giả sử các bản ghi children này có ParentId được gán
-                var lookup = categories.ToDictionary(c => c.Id);
-                foreach (var child in children)
-                {
-                    if (child.ParentId.HasValue && lookup.ContainsKey(child.ParentId.Value))
-                    {
-                        lookup[child.ParentId.Value].Children.Add(child);
-                    }
-                }
-            }
+            // // Nếu Depth >= 2, lấy danh sách Children cho các Category (nếu stored procedure trả về result set này)
+            // if (dto.Depth >= 2)
+            // {
+            //     var children = (await multi.ReadAsync<Category>()).ToList();
+            //     // Gán các category con vào property Children của category cha
+            //     // Giả sử các bản ghi children này có ParentId được gán
+            //     var lookup = categories.ToDictionary(c => c.Id);
+            //     foreach (var child in children)
+            //     {
+            //         if (child.ParentId.HasValue && lookup.ContainsKey(child.ParentId.Value))
+            //         {
+            //             lookup[child.ParentId.Value].Children.Add(child);
+            //         }
+            //     }
+            // }
 
-            return new PaginatedResult<Category>(categories, totalCount, currentPage: pagination.PageNumber, pageSize: pagination.PageSize);
+            return new PaginatedResult<Category>(categories, totalCount, currentPage: dto.PageNumber, pageSize: dto.PageSize);
         }
 
         public async Task<Category?> GetCategoryByIdAsync(int categoryId, int depth)

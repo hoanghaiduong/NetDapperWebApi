@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using NetDapperWebApi.Common.Interfaces;
 using NetDapperWebApi.DTO.Creates;
 using NetDapperWebApi.DTO.Updates;
+using NetDapperWebApi.Models;
 
 namespace NetDapperWebApi.Controllers
 {
@@ -21,16 +22,16 @@ namespace NetDapperWebApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllCategoryDetails()
+        public async Task<IActionResult> GetAllCategoryDetails([FromBody] PaginationModel dto)
         {
-            var categoryDetails = await _categoryDetailsService.GetAllCategoryDetailsAsync();
+            var categoryDetails = await _categoryDetailsService.GetAllCategoryDetailsAsync(dto);
             return Ok(categoryDetails);
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetCategoryDetailsById(int id)
+        public async Task<IActionResult> GetCategoryDetailsById([FromRoute] int id, [FromQuery] int depth = 0)
         {
-            var categoryDetails = await _categoryDetailsService.GetCategoryDetailsByIdAsync(id);
+            var categoryDetails = await _categoryDetailsService.GetCategoryDetailsByIdAsync(id, depth);
             if (categoryDetails == null) return NotFound();
             return Ok(categoryDetails);
         }
