@@ -24,8 +24,7 @@ namespace NetDapperWebApi.Entities
 
         public string? Thumbnail { get; set; }
         public int? Floor {get;set;}
-        public decimal PricePerHour { get; set; }
-        public ERoomStatus Status { get; set; } = ERoomStatus.Ready;
+         public ERoomStatus Status { get; set; } = ERoomStatus.Ready;
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public virtual RoomType? RoomType { get; set; } = null;

@@ -56,7 +56,7 @@ namespace NetDapperWebApi.Services
                 parameters.Add("@RoomNumber", room.RoomNumber);
                 parameters.Add("@Thumbnail", thumbnail);
                 parameters.Add("@Images", imagesJson);
-                parameters.Add("@PricePerHour", room.PricePerHour);
+            
                 parameters.Add("@Floor", room.Floor);
                 parameters.Add("@Status", room.Status);
 
@@ -208,7 +208,7 @@ namespace NetDapperWebApi.Services
                 parameters.Add("@RoomNumber", room.RoomNumber);
                 parameters.Add("@Thumbnail", thumbnail);
                 parameters.Add("@Images", imagesJson);
-                parameters.Add("@PricePerHour", room.PricePerHour);
+          
                 parameters.Add("@Floor", room.Floor);
                 parameters.Add("@Status", room.Status);
                 parameters.Add("@UpdatedAt", DateTime.UtcNow);

@@ -22,7 +22,7 @@ namespace NetDapperWebApi.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetAllCategoryDetails([FromBody] PaginationModel dto)
+        public async Task<IActionResult> GetAllCategoryDetails([FromQuery] PaginationModel dto)
         {
             var categoryDetails = await _categoryDetailsService.GetAllCategoryDetailsAsync(dto);
             return Ok(categoryDetails);

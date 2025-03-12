@@ -20,7 +20,7 @@ namespace NetDapperWebApi.DTO.Updates
 
 
         public int? Floor { get; set; }
-        public decimal? PricePerHour { get; set; }
+    
         [AllowedValues(values: [0, 1, 2])]
         public int? Status { get; set; }
 

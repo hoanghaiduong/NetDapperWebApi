@@ -17,7 +17,7 @@ namespace NetDapperWebApi.DTO
         public string RoomNumber { get; set; }
 
         public int? Floor { get; set; }
-        public decimal PricePerHour { get; set; }
+    
         // [AllowedValues(values: [0, 1, 2,3,4,5])]
         public ERoomStatus Status { get; set; } = ERoomStatus.Ready;
 

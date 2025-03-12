@@ -7,7 +7,7 @@ namespace NetDapperWebApi.Common.Enums
     {
         Not_Available = 0,
         Ready = 1,
-        Booked = 2,
+        Booked = 2, 
         Assign_Clean = 3,
         Maintenance = 4
 
