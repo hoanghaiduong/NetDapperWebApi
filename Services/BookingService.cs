@@ -47,9 +47,9 @@ namespace NetDapperWebApi.Services
                 parameters.Add("@ArrivalTime", dto.ArrivalTime);
                 parameters.Add("@CheckInDate", dto.CheckInDate);
                 parameters.Add("@CheckOutDate", dto.CheckOutDate);
-                if (dto.TotalPrice > 0)
+                if (dto.BasePrice > 0)
                 {
-                    parameters.Add("@TotalPrice", dto.TotalPrice);
+                    parameters.Add("@BasePrice", dto.BasePrice);
                 }
 
                 parameters.Add("@UserId", dto.UserId);
@@ -210,7 +210,7 @@ namespace NetDapperWebApi.Services
                 parameters.Add("@CheckInDate", dto.CheckInDate);
                 parameters.Add("@CheckOutDate", dto.CheckOutDate);
                 parameters.Add("@Status", dto.Status);
-                parameters.Add("@TotalPrice", dto.TotalPrice);
+                parameters.Add("@BasePrice", dto.BasePrice);
                 parameters.Add("@UserId", dto.UserId);
                 parameters.Add("@BookingRoomTypes", dt.AsTableValuedParameter("dbo.BookingRoomTypesTVP"));
 

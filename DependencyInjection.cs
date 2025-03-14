@@ -36,6 +36,8 @@ namespace NetDapperWebApi
             services.AddScoped<ICategoryService, CategoryService>();
             services.AddScoped<ICategoryDetailsService, CategoryDetailsService>();
             services.AddScoped<IBookingService, BookingService>();
+            services.AddScoped<IServiceServices, ServiceServices>();
+             services.AddScoped<IServiceUsageService, ServiceUsageService>();
             // services.AddFluentValidationAutoValidation();
             // services.AddValidatorsFromAssemblyContaining<CreateMultipleImageValidator>();
 

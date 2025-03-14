@@ -17,7 +17,7 @@ namespace NetDapperWebApi.Entities
 
         // Navigation Properties
         [JsonIgnore]
-        public virtual Payment Payment { get; set; }
+        public virtual Payment Payment { get; set; } 
         [JsonIgnore]
         public virtual Invoice Invoice { get; set; }
     }

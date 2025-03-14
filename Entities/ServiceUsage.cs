@@ -21,10 +21,12 @@ namespace NetDapperWebApi.Entities
         public DateTime UsedAt { get; set; } = DateTime.UtcNow;
 
         // Navigation Properties
-        [JsonIgnore]
-        // Navigation Properties
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+
+
         public virtual Booking Booking { get; set; }
-        [JsonIgnore]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        // Navigation Properties
         public virtual Service Service { get; set; }
     }
 }

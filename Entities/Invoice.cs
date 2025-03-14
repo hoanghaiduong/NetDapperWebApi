@@ -23,5 +23,7 @@ namespace NetDapperWebApi.Entities
           // Navigation Properties
         [JsonIgnore]
         public virtual Booking Booking { get; set; }
+
+        public virtual List<PaymentInvoice>? PaymentInvoices { get; set; }
     }
 }

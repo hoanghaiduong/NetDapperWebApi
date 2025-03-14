@@ -14,9 +14,9 @@ namespace NetDapperWebApi.Entities
         public string Name { get; set; }
 
         public string? Description { get; set; }
-        public decimal Price { get; set; }
-        [JsonIgnore]
-        public virtual IList<ServiceUsage> ServiceUsages { get; set; } = [];
+        public int Price { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public virtual List<ServiceUsage> ServiceUsages { get; set; } = [];
 
     }
 }
