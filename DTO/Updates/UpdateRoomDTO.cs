@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using NetDapperWebApi.Common.Enums;
 
 namespace NetDapperWebApi.DTO.Updates
 {
@@ -20,9 +21,8 @@ namespace NetDapperWebApi.DTO.Updates
 
 
         public int? Floor { get; set; }
-    
-        [AllowedValues(values: [0, 1, 2])]
-        public int? Status { get; set; }
+
+        public ERoomStatus? Status { get; set; } = ERoomStatus.Ready;
 
 
 

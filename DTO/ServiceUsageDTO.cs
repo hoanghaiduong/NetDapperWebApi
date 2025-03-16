@@ -14,7 +14,7 @@ namespace NetDapperWebApi.DTO
         public int ServiceId {get;set;}
         public int Quantity { get; set; } = 1;
         [JsonIgnore]
-        public int TotalPrice { get; set; }
+        public decimal TotalPrice { get; set; }
         public DateTime UsedAt { get; set; } = DateTime.UtcNow;
     }
 }

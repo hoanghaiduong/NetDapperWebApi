@@ -1,6 +1,7 @@
 
 
 using System.Text.Json.Serialization;
+using NetDapperWebApi.Common.Enums;
 
 namespace NetDapperWebApi.DTO
 {
@@ -16,12 +17,12 @@ namespace NetDapperWebApi.DTO
         public string? ArrivalTime { get; set; } // Thời gian đến dự kiến
         public DateTime? CheckInDate { get; set; } = DateTime.Now;
         public DateTime? CheckOutDate { get; set; } = DateTime.Now;
+        [JsonIgnore]
+        public string? Status { get; set; } // Trạng thái đặt phòng (Status):   // 0: Chờ xác nhận 1: Đã xác nhận  2: Đã hủy 3: Đã hoàn thành
 
-        public int? Status { get; set; }// Trạng thái đặt phòng (Status):   // 0: Chờ xác nhận 1: Đã xác nhận  2: Đã hủy 3: Đã hoàn thành
-
-        public int? BasePrice { get; set; } = 0;
+        public decimal? BasePrice { get; set; } = 0;
         public int? UserId { get; set; }
-        
+
 
     }
 }

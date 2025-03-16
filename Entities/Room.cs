@@ -12,27 +12,23 @@ namespace NetDapperWebApi.Entities
 {
     public class Room : BaseEntity<int>
     {
-     
+
 
         [JsonIgnore]
         public int RoomTypeId { get; set; }
-
-
-
-        [Required, MaxLength(20)]
         public string RoomNumber { get; set; }
 
         public string? Thumbnail { get; set; }
-        public int? Floor {get;set;}
-         public ERoomStatus Status { get; set; } = ERoomStatus.Ready;
+        public int? Floor { get; set; }
+        public ERoomStatus? Status { get; set; }
 
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public virtual RoomType? RoomType { get; set; } = null;
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public virtual ICollection<Booking> Bookings { get; set; } = [];
-      
-    
-        
+
+
+
         // ✅ Cột JSON lưu trữ dưới dạng string trong DB
         [JsonIgnore]
         public string? Images { get; set; }

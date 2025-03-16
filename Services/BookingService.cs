@@ -159,6 +159,13 @@ namespace NetDapperWebApi.Services
                         brt.RoomType = roomType;
                     }
                 }
+                booking.BookingRoomTypes = bookingRoomTypes;
+
+                var services = (await multi.ReadAsync<Service>()).ToList();
+                booking.Services = services;
+                var invoices = (await multi.ReadAsync<Invoice>()).ToList();
+                booking.Invoices = invoices;
+
                 if (booking.UserId != null)
                 {
                     var user = await multi.ReadFirstOrDefaultAsync<User>();
@@ -169,15 +176,10 @@ namespace NetDapperWebApi.Services
                 }
 
 
-
-
-                booking.BookingRoomTypes = bookingRoomTypes;
             }
             if (depth >= 2)
             {
                 var hotel = await multi.ReadFirstOrDefaultAsync<Hotel>();
-                //     var hotels = await multi.ReadAsync<Hotel>();
-                // booking.Hotel=hotels.Where(h=>h.Id==booking.Hotel.Id).FirstOrDefault();
                 booking.Hotel = hotel;
             }
 
@@ -194,11 +196,14 @@ namespace NetDapperWebApi.Services
                 dt.Columns.Add("RoomTypeId", typeof(int));
                 dt.Columns.Add("FullName", typeof(string));
                 dt.Columns.Add("Email", typeof(string));
-
-                foreach (var item in dto.BookingRoomTypes)
+                if (dto.BookingRoomTypes != null)
                 {
-                    dt.Rows.Add(item.RoomTypeId, item.FullName, item.Email);
+                    foreach (var item in dto.BookingRoomTypes)
+                    {
+                        dt.Rows.Add(item.RoomTypeId, item.FullName, item.Email);
+                    }
                 }
+
 
                 var parameters = new DynamicParameters();
                 parameters.Add("@Id", id);
@@ -209,7 +214,7 @@ namespace NetDapperWebApi.Services
                 parameters.Add("@ArrivalTime", dto.ArrivalTime);
                 parameters.Add("@CheckInDate", dto.CheckInDate);
                 parameters.Add("@CheckOutDate", dto.CheckOutDate);
-                parameters.Add("@Status", dto.Status);
+                parameters.Add("@Status", dto.Status,DbType.String);
                 parameters.Add("@BasePrice", dto.BasePrice);
                 parameters.Add("@UserId", dto.UserId);
                 parameters.Add("@BookingRoomTypes", dt.AsTableValuedParameter("dbo.BookingRoomTypesTVP"));

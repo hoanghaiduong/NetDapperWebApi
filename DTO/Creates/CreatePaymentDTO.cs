@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 
 namespace NetDapperWebApi.DTO.Creates
 {
-    public class CreateBookingDTO : BookingDTO
+    public class CreatePaymentDTO : PaymentDTO
     {
-        public List<CreateBookingRoomTypesDTO> BookingRoomTypes { get; set; }
+       
     }
 }

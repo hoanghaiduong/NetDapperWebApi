@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using NetDapperWebApi.Common.Enums;
 using NetDapperWebApi.Common.Interfaces;
 using NetDapperWebApi.DTO.Creates;
 using NetDapperWebApi.DTO.Updates;
@@ -57,16 +58,18 @@ namespace NetDapperWebApi.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
+         
             var booking = await _bookingService.CreateAsync(dto);
             return Ok(new { booking });
         }
 
         // PUT api/booking/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] UpdateBookingDTO dto)
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateBookingDTO dto,[FromQuery] EBookingStatus? status=null)
         {
+             dto.Status=status.ToString();
             var rowsAffected = await _bookingService.UpdateAsync(id, dto);
+           
             return Ok(rowsAffected);
         }
 

@@ -56,9 +56,9 @@ namespace NetDapperWebApi.Services
                 parameters.Add("@RoomNumber", room.RoomNumber);
                 parameters.Add("@Thumbnail", thumbnail);
                 parameters.Add("@Images", imagesJson);
-            
+
                 parameters.Add("@Floor", room.Floor);
-                parameters.Add("@Status", room.Status);
+                parameters.Add("@Status", room.Status.ToString());
 
 
                 var result = await _db.QueryFirstOrDefaultAsync<Room>(
@@ -106,10 +106,10 @@ namespace NetDapperWebApi.Services
 
                 room.RoomType = await multi.ReadSingleAsync<RoomType>();
                 room.Bookings = (await multi.ReadAsync<Booking>()).ToList();
-            
+
                 // // Đọc danh sách CategoryDetails từ result set tiếp theo
                 // var allDetails = (await multi.ReadAsync<CategoryDetails>()).ToList();
-             
+
             }
 
             return room;
@@ -132,7 +132,7 @@ namespace NetDapperWebApi.Services
             var totalCount = await multi.ReadFirstOrDefaultAsync<int>(); // Đọc TotalCount
             var rooms = (await multi.ReadAsync<Room>()).ToList(); // Đọc danh sách Rooms
                                                                   // Xử lý ImagesList cho tất cả rooms ngay lập tức, không phụ thuộc vào Depth
-            //lấy roomType của từng phòng 
+                                                                  //lấy roomType của từng phòng 
 
             if (rooms.Count != 0 && paginationModel.Depth >= 1)
             {
@@ -140,7 +140,7 @@ namespace NetDapperWebApi.Services
 
                 foreach (var room in rooms)
                 {
-                    room.RoomType = roomTypes.Where(x=>x.Id==room.RoomTypeId).FirstOrDefault();
+                    room.RoomType = roomTypes.Where(x => x.Id == room.RoomTypeId).FirstOrDefault();
                 }
             }
 
@@ -208,9 +208,9 @@ namespace NetDapperWebApi.Services
                 parameters.Add("@RoomNumber", room.RoomNumber);
                 parameters.Add("@Thumbnail", thumbnail);
                 parameters.Add("@Images", imagesJson);
-          
+
                 parameters.Add("@Floor", room.Floor);
-                parameters.Add("@Status", room.Status);
+                parameters.Add("@Status", room.Status.ToString());
                 parameters.Add("@UpdatedAt", DateTime.UtcNow);
 
                 var result = await _db.QueryFirstOrDefaultAsync<Room>(

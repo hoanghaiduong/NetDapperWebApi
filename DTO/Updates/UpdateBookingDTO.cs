@@ -8,6 +8,6 @@ namespace NetDapperWebApi.DTO.Updates
     public class UpdateBookingDTO : BookingDTO
     {
         // public int Id { get; set; }
-        public List<UpdateBookingRoomTypesDTO> BookingRoomTypes { get; set; }
+        public List<UpdateBookingRoomTypesDTO?>? BookingRoomTypes { get; set; }
     }
 }
