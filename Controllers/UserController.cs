@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using NetDapperWebApi.Common.Interfaces;
 using NetDapperWebApi.DTO;
@@ -54,6 +56,24 @@ namespace NetDapperWebApi.Controllers
                 {
                     ex.Message
                 });
+            }
+        }
+        [HttpGet("get"), Authorize]
+        public async Task<IActionResult> GetUserByToken()
+        {
+            try
+            {
+                var uid = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var user = await _userService.GetUserById(int.Parse(uid), 1);
+                if (user == null)
+                {
+                    return Unauthorized();
+                }
+                return Ok(new { user });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { ex.Message });
             }
         }
 
