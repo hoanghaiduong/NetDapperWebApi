@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using NetDapperWebApi.Common.Constants;
 using NetDapperWebApi.Common.Interfaces;
 using NetDapperWebApi.DTO;
 using NetDapperWebApi.DTO.Creates;
@@ -69,7 +70,7 @@ namespace NetDapperWebApi.Controllers
                 {
                     return Unauthorized();
                 }
-                return Ok(new { user });
+                return Ok(user);
             }
             catch (Exception ex)
             {
@@ -77,7 +78,8 @@ namespace NetDapperWebApi.Controllers
             }
         }
 
-        [HttpGet]
+        [HttpGet, Authorize(Roles = $"{AppRole.Admin},{AppRole.Employee}")]
+
         public async Task<IResult> GetAll([FromQuery] PaginationModel model)
         {
             try

@@ -40,6 +40,7 @@ namespace NetDapperWebApi
             services.AddScoped<IServiceUsageService, ServiceUsageService>();
             services.AddScoped<IInvoiceService, InvoiceService>();
             services.AddScoped<IPaymentService,PaymentService>();
+             services.AddScoped<IRoleService,RoleService>();
             // services.AddFluentValidationAutoValidation();
             // services.AddValidatorsFromAssemblyContaining<CreateMultipleImageValidator>();
 

@@ -61,13 +61,9 @@ namespace NetDapperWebApi.Services
                     "Users_CheckLogin",
                     parameters,
                     commandType: CommandType.StoredProcedure
-                );
-                // 4. Kiểm tra kết quả
-                if (user == null)
-                {
-                    throw new Exception("User creation failed.");
-                }
-
+                ) ?? throw new Exception("User not found.");
+                var newUser = await _userService.GetUserById(user.Id, 1);
+                var roles = newUser.Roles ?? new List<Role>();
                 // 5. Tạo Access Token & Refresh Token
                 var claims = new List<Claim>
                 {
@@ -75,6 +71,10 @@ namespace NetDapperWebApi.Services
                     new Claim(ClaimTypes.Email, user.Email),
 
                 };
+                foreach (var role in roles)
+                {
+                    claims.Add(new Claim(ClaimTypes.Role, role.Name)); // Thêm role vào claims
+                }
                 var accessToken = _jwtService.GenerateAccessToken(claims);
                 var refreshToken = _jwtService.GenerateRefreshToken();
                 // 6. Cập nhật Refresh Token vào DB
@@ -82,10 +82,12 @@ namespace NetDapperWebApi.Services
                 updateParams.Add("@UserId", user.Id);
                 updateParams.Add("@RefreshToken", refreshToken);
                 await _db.ExecuteAsync("UPDATE Users SET RefreshToken = @RefreshToken WHERE Id = @UserId", updateParams);
+                newUser.RefreshToken = refreshToken;
                 var token = new TokenModel(
                       accessToken, refreshToken
                 );
-                var newUser=await _userService.GetUserById(user.Id,1);
+
+
                 // 7. Trả về AuthResponse
                 return new AuthResponse
                 {

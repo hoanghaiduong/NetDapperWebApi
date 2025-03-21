@@ -11,9 +11,15 @@ namespace NetDapperWebApi.Services
         public FileUploadService(IWebHostEnvironment environment)
         {
             _environment = environment;
+            var webRoot = _environment.WebRootPath;
+            if (!Directory.Exists(webRoot))
+            {
+                Directory.CreateDirectory(webRoot);
+            }
         }
         public async Task<string> UploadSingleFile(string[] destination, IFormFile file)
         {
+
             if (file == null || file.Length == 0)
                 return null;
 
