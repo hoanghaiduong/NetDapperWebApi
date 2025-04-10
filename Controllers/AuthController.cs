@@ -50,16 +50,16 @@ namespace NetDapperWebApi.Controllers
 
 
         [HttpPost("signin")]
-        public async Task<IResult> SignIn([FromBody] AuthDTO dto)
+        public async Task<IActionResult> SignIn([FromBody] AuthDTO dto)
         {
             try
             {
                 var result = await _authService.SignInAsync(dto);
-                return Results.Ok(result);
+                return Ok(result);
             }
             catch (Exception ex)
             {
-                return Results.BadRequest(new
+                return BadRequest(new
                 {
                     message = ex.Message
                 });

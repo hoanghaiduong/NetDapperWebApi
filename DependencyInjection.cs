@@ -7,6 +7,7 @@ using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -20,11 +21,22 @@ namespace NetDapperWebApi
 {
     public static class DependencyInjection
     {
+        
         private static readonly string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
         public static IServiceCollection AddWebServices(this IServiceCollection services, IConfiguration configuration)
         {
+            
             services.Configure<AppSettings>(configuration.GetSection("AppSettings"));
+            services.AddStackExchangeRedisCache(c =>
+            {
+                c.Configuration = configuration.GetConnectionString("Redis")??"localhost:6379";
+                c.InstanceName = "NetDapperWebApi_";
+            });
+            // services.AddOutputCache(options=>{
+            //     options.AddBasePolicy(builder=>builder.Expire(TimeSpan.FromSeconds(60))); 
+            // });
             services.AddScoped<IDbConnection>(cnn => new SqlConnection(configuration.GetConnectionString("DefaultConnection")));
+
             services.AddScoped<IRoomTypeService, RoomTypeService>();
             services.AddScoped<IRoomService, RoomService>();
             services.AddScoped<IHotelService, HotelService>();
@@ -39,8 +51,9 @@ namespace NetDapperWebApi
             services.AddScoped<IServiceServices, ServiceServices>();
             services.AddScoped<IServiceUsageService, ServiceUsageService>();
             services.AddScoped<IInvoiceService, InvoiceService>();
-            services.AddScoped<IPaymentService,PaymentService>();
-             services.AddScoped<IRoleService,RoleService>();
+            services.AddScoped<IPaymentService, PaymentService>();
+            services.AddScoped<IRoleService, RoleService>();
+            services.AddScoped<IRedisCacheService, RedisCacheService>();
             // services.AddFluentValidationAutoValidation();
             // services.AddValidatorsFromAssemblyContaining<CreateMultipleImageValidator>();
 
@@ -131,6 +144,34 @@ namespace NetDapperWebApi
                 };
             });
             services.AddAuthorization();
+            return services;
+        }
+        public static IServiceCollection AddCustomModelStateValidation(this IServiceCollection services)
+        {
+            services.Configure<ApiBehaviorOptions>(options =>
+                {
+                    options.InvalidModelStateResponseFactory = context =>
+                    {
+                        var errors = context.ModelState
+                            .Where(e => e.Value.Errors.Count > 0)
+                            .ToDictionary(
+                                kvp => kvp.Key,
+                                kvp => kvp.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                            );
+
+                        var response = new
+                        {
+                            title = "One or more validation errors occurred.",
+                            status = 400,
+                            errors
+                        };
+
+                        return new BadRequestObjectResult(response)
+                        {
+                            ContentTypes = { "application/json" }
+                        };
+                    };
+                });
             return services;
         }
         public static WebApplication UseCustomExtensions(this WebApplication app)
